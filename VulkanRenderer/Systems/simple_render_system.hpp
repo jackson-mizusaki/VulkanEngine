@@ -12,7 +12,7 @@
 namespace ld {
 	class SimpleRenderSystem {
 	public:
-		SimpleRenderSystem(LdDevice& device, VkRenderPass rendderPass, VkDescriptorSetLayout globalSetLayout);
+		SimpleRenderSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~SimpleRenderSystem();
 		SimpleRenderSystem(const SimpleRenderSystem&) = delete;
 		SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;

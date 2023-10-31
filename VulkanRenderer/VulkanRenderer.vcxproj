@@ -71,16 +71,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -165,37 +169,38 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="app.cpp" />
-    <ClCompile Include="keyboard_movement_controller.cpp" />
-    <ClCompile Include="ld_buffer.cpp" />
-    <ClCompile Include="ld_camera.cpp" />
-    <ClCompile Include="ld_descriptors.cpp" />
-    <ClCompile Include="ld_device.cpp" />
-    <ClCompile Include="ld_frame_info.hpp" />
-    <ClCompile Include="ld_game_object.cpp" />
-    <ClCompile Include="ld_model.cpp" />
-    <ClCompile Include="ld_pipeline.cpp" />
-    <ClCompile Include="ld_renderer.cpp" />
-    <ClCompile Include="ld_swapchain.cpp" />
-    <ClCompile Include="ld_window.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="simple_render_system.cpp" />
+    <ClCompile Include="src\app.cpp" />
+    <ClCompile Include="src\keyboard_movement_controller.cpp" />
+    <ClCompile Include="src\ld_buffer.cpp" />
+    <ClCompile Include="src\ld_camera.cpp" />
+    <ClCompile Include="src\ld_descriptors.cpp" />
+    <ClCompile Include="src\ld_device.cpp" />
+    <ClCompile Include="src\ld_frame_info.hpp" />
+    <ClCompile Include="src\ld_game_object.cpp" />
+    <ClCompile Include="src\ld_model.cpp" />
+    <ClCompile Include="src\ld_pipeline.cpp" />
+    <ClCompile Include="src\ld_renderer.cpp" />
+    <ClCompile Include="src\ld_swapchain.cpp" />
+    <ClCompile Include="src\ld_window.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="Systems\point_light_system.cpp" />
+    <ClCompile Include="Systems\simple_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="app.hpp" />
-    <ClInclude Include="keyboard_movement_controller.hpp" />
-    <ClInclude Include="ld_buffer.hpp" />
-    <ClInclude Include="ld_camera.hpp" />
-    <ClInclude Include="ld_descriptors.hpp" />
-    <ClInclude Include="ld_device.hpp" />
-    <ClInclude Include="ld_game_object.hpp" />
-    <ClInclude Include="ld_model.hpp" />
-    <ClInclude Include="ld_pipeline.hpp" />
-    <ClInclude Include="ld_renderer.hpp" />
-    <ClInclude Include="ld_swapchain.hpp" />
-    <ClInclude Include="ld_utils.hpp" />
-    <ClInclude Include="ld_window.hpp" />
-    <ClInclude Include="simple_render_system.hpp" />
+    <ClInclude Include="src\app.hpp" />
+    <ClInclude Include="src\keyboard_movement_controller.hpp" />
+    <ClInclude Include="src\ld_buffer.hpp" />
+    <ClInclude Include="src\ld_camera.hpp" />
+    <ClInclude Include="src\ld_descriptors.hpp" />
+    <ClInclude Include="src\ld_device.hpp" />
+    <ClInclude Include="src\ld_game_object.hpp" />
+    <ClInclude Include="src\ld_model.hpp" />
+    <ClInclude Include="src\ld_pipeline.hpp" />
+    <ClInclude Include="src\ld_renderer.hpp" />
+    <ClInclude Include="src\ld_swapchain.hpp" />
+    <ClInclude Include="src\ld_utils.hpp" />
+    <ClInclude Include="src\ld_window.hpp" />
+    <ClInclude Include="Systems\simple_render_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\simple_shader.frag" />
