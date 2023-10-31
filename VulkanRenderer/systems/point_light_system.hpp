@@ -25,6 +25,7 @@ namespace ld {
 	public:
 		void render(FrameInfo& frameInfo);
 		void update(FrameInfo& frameInfo, GlobalUBO& ubo);
+	
 	private:
 		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void createPipeline(VkRenderPass renderPass);

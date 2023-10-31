@@ -7,6 +7,7 @@
 #include <glm/gtc/constants.hpp>
 
 #include <stdexcept>
+#include <map>
 #include <array>
 
 namespace ld {
@@ -57,6 +58,7 @@ namespace ld {
 
 		PipelineConfigInfo pipelineConfig{};
 		LdPipeline::defaultPipelineConfigInfo(pipelineConfig);
+		LdPipeline::enableAlphaBlending(pipelineConfig);
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.bindingDescriptions.clear();
 		pipelineConfig.renderPass = renderPass;
@@ -71,14 +73,27 @@ namespace ld {
 
 	void PointLightSystem::render(FrameInfo& frameInfo)
 	{
-		ldPipeline->bind(frameInfo.commandBuffer);
-
-		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+		std::map<float, LdGameObject::id_t> sorted;
 
 		for (auto& kv : frameInfo.gameObjects)
 		{
 			auto& obj = kv.second;
 			if (obj.pointLight == nullptr) continue;
+			// calc distance
+			auto offset = frameInfo.camera.getPosition() - obj.transform.translation;
+			float disSquared = glm::dot(offset, offset);
+			// no need to sqrt because squares preserve ordering
+			sorted[disSquared] = obj.getId();
+		}
+
+		ldPipeline->bind(frameInfo.commandBuffer);
+
+		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+
+		// iterate through sorted elements in reverse order
+		for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
+		{
+			auto& obj = frameInfo.gameObjects.at(it->second);
 
 			PointLightPushConstants push{};
 			push.position = glm::vec4(obj.transform.translation, 1.f);

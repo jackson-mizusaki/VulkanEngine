@@ -105,14 +105,18 @@ namespace ld {
 				GlobalUBO ubo{};
 				ubo.projection = camera.getProjection();
 				ubo.view = camera.getView();
+				ubo.inverseView = camera.getInverseView();
 				pointLightSystem.update(frameInfo, ubo);
 				uboBuffers[frameIndex]->writeToBuffer(&ubo);
 				uboBuffers[frameIndex]->flush();
 
 				// additional render passes can be added here later
+				//render
 				ldRenderer.beginSwapChainRenderPass(commandBuffer);
+				
 				simpleRenderSystem.renderGameObjects(frameInfo);
 				pointLightSystem.render(frameInfo);
+				
 				ldRenderer.endSwapChainRenderPass(commandBuffer);
 				ldRenderer.endFrame();
 			}
