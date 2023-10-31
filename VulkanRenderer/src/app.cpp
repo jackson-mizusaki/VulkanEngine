@@ -2,8 +2,11 @@
 
 #include "keyboard_movement_controller.hpp"
 #include "ld_camera.hpp"
-#include "simple_render_system.hpp"
+#include "systems/simple_render_system.hpp"
+#include "systems/point_light_system.hpp"
 #include "ld_buffer.hpp"
+
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -15,13 +18,7 @@
 
 namespace ld {
 	// be aware of alignment rules std140
-	struct GlobalUBO {
-		glm::mat4 projection{ 1.f };
-		glm::mat4 view{ 1.f };
-		glm::vec4 ambientLightColor{ 1.f, 0.9f, 1.f, .02f };
-		glm::vec3 lightPosition{ -1.f };
-		alignas(16) glm::vec4 lightColor{ 1.f }; // w is light intensity
-	};
+
 
 	App::App()
 	{
@@ -64,33 +61,34 @@ namespace ld {
 			LdDescriptorWriter(*globalSetLayout, *globalPool)
 				.writeBuffer(0, &bufferInfo)
 				.build(globalDescriptorSets[i]);
-	
-					
+
+
 		}
 
 
-		SimpleRenderSystem simpleRenderSystem{ ldDevice, ldRenderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout()};
-        LdCamera camera{};
+		SimpleRenderSystem simpleRenderSystem{ ldDevice, ldRenderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
+		PointLightSystem pointLightSystem{ ldDevice, ldRenderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
+		LdCamera camera{};
 
-        auto viewerObject = LdGameObject::createGameObject();
+		auto viewerObject = LdGameObject::createGameObject();
 		viewerObject.transform.translation.z = -2.5f;
-        KeyboardMovementController cameraController{};
+		KeyboardMovementController cameraController{};
 
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
+		auto currentTime = std::chrono::high_resolution_clock::now();
 		while (!ldWindow.shouldClose())
 		{
 			glfwPollEvents();
 
-            auto newTime = std::chrono::high_resolution_clock::now();
-            float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-            currentTime = newTime;
+			auto newTime = std::chrono::high_resolution_clock::now();
+			float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
+			currentTime = newTime;
 
-            cameraController.moveInPlaneXZ(ldWindow.getGLFWwindow(), frameTime, viewerObject);
-            camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+			cameraController.moveInPlaneXZ(ldWindow.getGLFWwindow(), frameTime, viewerObject);
+			camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
-            float aspect = ldRenderer.getAspectRatio();
-            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
+			float aspect = ldRenderer.getAspectRatio();
+			camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 
 			// beginFrame() returns nullptr if swapchain needs to be recreated
 			if (auto commandBuffer = ldRenderer.beginFrame()) {
@@ -107,19 +105,21 @@ namespace ld {
 				GlobalUBO ubo{};
 				ubo.projection = camera.getProjection();
 				ubo.view = camera.getView();
+				pointLightSystem.update(frameInfo, ubo);
 				uboBuffers[frameIndex]->writeToBuffer(&ubo);
 				uboBuffers[frameIndex]->flush();
 
 				// additional render passes can be added here later
 				ldRenderer.beginSwapChainRenderPass(commandBuffer);
 				simpleRenderSystem.renderGameObjects(frameInfo);
+				pointLightSystem.render(frameInfo);
 				ldRenderer.endSwapChainRenderPass(commandBuffer);
 				ldRenderer.endFrame();
 			}
 		}
 		vkDeviceWaitIdle(ldDevice.device());
 	}
-   
+
 
 
 	void App::loadGameObjects()
@@ -127,22 +127,44 @@ namespace ld {
 		std::shared_ptr<LdModel> ldModel = LdModel::createModelFromFile(ldDevice, "models/flat_vase.obj");
 		auto flatVase = LdGameObject::createGameObject();
 		flatVase.model = ldModel;
-		flatVase.transform.translation = {-.5f, .5f, 0.f };
+		flatVase.transform.translation = { -.5f, .5f, 0.f };
 		flatVase.transform.scale = { 3.f,1.5f, 3.f };
 		gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
-        ldModel = LdModel::createModelFromFile(ldDevice, "models/smooth_vase.obj");
-        auto smoothVase = LdGameObject::createGameObject();
-        smoothVase.model = ldModel;
-        smoothVase.transform.translation = { .5f, .5f, 0.f };
-        smoothVase.transform.scale = { 3.f,1.5f, 3.f };
+		ldModel = LdModel::createModelFromFile(ldDevice, "models/smooth_vase.obj");
+		auto smoothVase = LdGameObject::createGameObject();
+		smoothVase.model = ldModel;
+		smoothVase.transform.translation = { .5f, .5f, 0.f };
+		smoothVase.transform.scale = { 3.f,1.5f, 3.f };
 		gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
-		
+
 		ldModel = LdModel::createModelFromFile(ldDevice, "models/quad.obj");
 		auto floor = LdGameObject::createGameObject();
 		floor.model = ldModel;
 		floor.transform.translation = { 0.f, .5f, 0.f };
 		floor.transform.scale = { 3.f,1.f, 3.f };
 		gameObjects.emplace(floor.getId(), std::move(floor));
+
+		std::vector<glm::vec3> lightColors{
+			 {1.f, .1f, .1f},
+			 {.1f, .1f, 1.f},
+			 {.1f, 1.f, .1f},
+			 {1.f, 1.f, .1f},
+			 {.1f, 1.f, 1.f},
+			 {1.f, 1.f, 1.f}  //
+		};
+
+		for (int i = 0; i < lightColors.size(); i++)
+		{
+			auto pointLight = LdGameObject::makePointLight(0.2f);
+			pointLight.color = lightColors[i];
+			auto rotateLight = glm::rotate(
+				glm::mat4(1.f),
+				(i * glm::two_pi<float>()) / lightColors.size(),
+				{ 0.f, -1.f, 0.f }
+			);
+			pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+			gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+		}
 	}
 }

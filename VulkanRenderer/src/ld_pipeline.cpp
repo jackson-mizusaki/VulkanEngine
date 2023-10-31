@@ -94,6 +94,9 @@ namespace ld {
 		configInfo.dynamicStateInfo.pDynamicStates = configInfo.dynamicStateEnables.data();
 		configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
 		configInfo.dynamicStateInfo.flags = 0;
+
+		configInfo.bindingDescriptions = LdModel::Vertex::getBindingDescriptions();
+		configInfo.attributeDescriptions = LdModel::Vertex::getAttributeDescriptions();
 	}
 
 	std::vector<char> LdPipeline::readFile(const std::string& filepath)
@@ -142,8 +145,8 @@ namespace ld {
 		shaderStages[1].pNext = nullptr;
 		shaderStages[1].pSpecializationInfo = nullptr;
 
-		auto attributeDescriptions = LdModel::Vertex::getAttributeDescriptions();
-		auto bindingDescriptions = LdModel::Vertex::getBindingDescriptions();
+		auto& attributeDescriptions = configInfo.attributeDescriptions;
+		auto& bindingDescriptions = configInfo.bindingDescriptions;
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());

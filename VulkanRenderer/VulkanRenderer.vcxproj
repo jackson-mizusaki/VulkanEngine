@@ -71,19 +71,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(SolutionDir)VulkanRenderer;$(IncludePath)</IncludePath>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(SolutionDir)VulkanRenderer;$(IncludePath)</IncludePath>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(SolutionDir)VulkanRenderer;$(IncludePath)</IncludePath>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)VulkanRenderer\src;$(SolutionDir)VulkanRenderer;$(IncludePath)</IncludePath>
     <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -200,9 +200,13 @@
     <ClInclude Include="src\ld_swapchain.hpp" />
     <ClInclude Include="src\ld_utils.hpp" />
     <ClInclude Include="src\ld_window.hpp" />
+    <ClInclude Include="systems\point_light_system.hpp" />
     <ClInclude Include="Systems\simple_render_system.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="compile.bat" />
+    <None Include="shaders\point_light.frag" />
+    <None Include="shaders\point_light.vert" />
     <None Include="shaders\simple_shader.frag" />
     <None Include="shaders\simple_shader.frag.spv" />
     <None Include="shaders\simple_shader.vert" />

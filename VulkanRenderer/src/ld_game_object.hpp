@@ -17,6 +17,11 @@ namespace ld {
 		glm::mat4 mat4();
 		glm::mat3 normalMatrix();
 	};
+
+	struct PointLightComponent {
+		float lightIntensity = 1.0f;
+	};
+
 	class LdGameObject {
 	public:
 		using id_t = unsigned int;
@@ -30,14 +35,17 @@ namespace ld {
 		LdGameObject(id_t objId) : id{ objId } {}
 
 	public:
-		std::shared_ptr<LdModel> model{};
 		glm::vec3 color{};
 		TransformComponent transform{};
 
+		// optional components
+		std::shared_ptr<LdModel> model{};
+		std::unique_ptr<PointLightComponent> pointLight = nullptr;
 	private:
 		id_t id;
 
 	public:
+		static LdGameObject makePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f));
 		static LdGameObject createGameObject()
 		{
 			static id_t currentId = 0;
