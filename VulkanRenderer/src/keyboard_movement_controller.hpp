@@ -4,7 +4,7 @@
 #include "ld_window.hpp"
 
 
-namespace ld {
+namespace Ld {
 	class KeyboardMovementController {
 	public:
 

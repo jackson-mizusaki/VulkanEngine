@@ -2,10 +2,10 @@
 
 #include "ld_device.hpp"
 
-namespace ld {
+namespace Ld {
 
 	class LdBuffer {
-	public:
+	public: // constructors
 		LdBuffer(
 			LdDevice& device,
 			VkDeviceSize instanceSize,
@@ -18,29 +18,15 @@ namespace ld {
 		LdBuffer(const LdBuffer&) = delete;
 		LdBuffer& operator=(const LdBuffer&) = delete;
 
-
-	public:
-	private:
-		LdDevice& ldDevice;
-		void* mapped = nullptr;
-		VkBuffer buffer = VK_NULL_HANDLE;
-		VkDeviceMemory memory = VK_NULL_HANDLE;
-
-		VkDeviceSize bufferSize;
-		uint32_t instanceCount;
-		VkDeviceSize instanceSize;
-		VkDeviceSize alignmentSize;
-		VkBufferUsageFlags usageFlags;
-		VkMemoryPropertyFlags memoryPropertyFlags;
-	public:
-		VkBuffer getBuffer() const { return buffer; }
-		void* getMappedMemory() const { return mapped; }
-		uint32_t getInstanceCount() const { return instanceCount; }
-		VkDeviceSize getInstanceSize() const { return instanceSize; }
-		VkDeviceSize getAlignmentSize() const { return instanceSize; }
-		VkBufferUsageFlags getUsageFlags() const { return usageFlags; }
-		VkMemoryPropertyFlags getMemoryPropertyFlags() const { return memoryPropertyFlags; }
-		VkDeviceSize getBufferSize() const { return bufferSize; }
+	public: // functions
+		VkBuffer getBuffer() const { return m_buffer; }
+		void* getMappedMemory() const { return m_mapped; }
+		uint32_t getInstanceCount() const { return m_instanceCount; }
+		VkDeviceSize getInstanceSize() const { return m_instanceSize; }
+		VkDeviceSize getAlignmentSize() const { return m_instanceSize; }
+		VkBufferUsageFlags getUsageFlags() const { return m_usageFlags; }
+		VkMemoryPropertyFlags getMemoryPropertyFlags() const { return m_memoryPropertyFlags; }
+		VkDeviceSize getBufferSize() const { return m_bufferSize; }
 		VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		void unmap();
 
@@ -56,7 +42,19 @@ namespace ld {
 	private:
 		static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 
+	public: // data
+	private:
+		LdDevice& m_ldDevice;
+		void* m_mapped = nullptr;
+		VkBuffer m_buffer = VK_NULL_HANDLE;
+		VkDeviceMemory m_memory = VK_NULL_HANDLE;
 
+		VkDeviceSize m_bufferSize;
+		uint32_t m_instanceCount;
+		VkDeviceSize m_instanceSize;
+		VkDeviceSize m_alignmentSize;
+		VkBufferUsageFlags m_usageFlags;
+		VkMemoryPropertyFlags m_memoryPropertyFlags;
 	};
 
 }  // namespace Ld

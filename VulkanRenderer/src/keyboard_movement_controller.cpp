@@ -1,7 +1,7 @@
 #include "keyboard_movement_controller.hpp"
 
-namespace ld {
-	void ld::KeyboardMovementController::moveInPlaneXZ(GLFWwindow* window, float dt, LdGameObject& gameObject)
+namespace Ld {
+	void Ld::KeyboardMovementController::moveInPlaneXZ(GLFWwindow* window, float dt, LdGameObject& gameObject)
 	{
 		glm::vec3 rotate{ 0 };
 

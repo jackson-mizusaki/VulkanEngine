@@ -5,7 +5,7 @@
 #include "systems/simple_render_system.hpp"
 #include "systems/point_light_system.hpp"
 #include "ld_buffer.hpp"
-
+#include "ld_texture.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -16,15 +16,12 @@
 #include <chrono>
 #include <array>
 
-namespace ld {
-	// be aware of alignment rules std140
-
-
+namespace Ld {
 	App::App()
 	{
-		globalPool = LdDescriptorPool::Builder(ldDevice)
-			.setMaxSets(LdSwapChain::MAX_FRAMES_IN_FLIGHT)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LdSwapChain::MAX_FRAMES_IN_FLIGHT)
+		m_globalPool = LdDescriptorPool::Builder(m_device)
+			.setMaxSets(LdSwapChain::s_maxFramesInFlight)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LdSwapChain::s_maxFramesInFlight)
 			.build();
 
 		loadGameObjects();
@@ -36,11 +33,11 @@ namespace ld {
 
 	void App::run()
 	{
-		std::vector<std::unique_ptr<LdBuffer>> uboBuffers(LdSwapChain::MAX_FRAMES_IN_FLIGHT);
+		std::vector<std::unique_ptr<LdBuffer>> uboBuffers(LdSwapChain::s_maxFramesInFlight);
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
 			uboBuffers[i] = std::make_unique<LdBuffer>(
-				ldDevice,
+				m_device,
 				sizeof(GlobalUBO),
 				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -49,34 +46,30 @@ namespace ld {
 			uboBuffers[i]->map();
 		}
 
-		auto globalSetLayout = LdDescriptorSetLayout::Builder(ldDevice)
+		auto globalSetLayout = LdDescriptorSetLayout::Builder(m_device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
 
-		std::vector<VkDescriptorSet> globalDescriptorSets(LdSwapChain::MAX_FRAMES_IN_FLIGHT);
+		std::vector<VkDescriptorSet> globalDescriptorSets(LdSwapChain::s_maxFramesInFlight);
 
 		for (int i = 0; i < globalDescriptorSets.size(); i++)
 		{
 			auto bufferInfo = uboBuffers[i]->descriptorInfo();
-			LdDescriptorWriter(*globalSetLayout, *globalPool)
+			LdDescriptorWriter(*globalSetLayout, *m_globalPool)
 				.writeBuffer(0, &bufferInfo)
 				.build(globalDescriptorSets[i]);
-
-
 		}
 
-
-		SimpleRenderSystem simpleRenderSystem{ ldDevice, ldRenderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
-		PointLightSystem pointLightSystem{ ldDevice, ldRenderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
+		SimpleRenderSystem simpleRenderSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
+		PointLightSystem pointLightSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
 		LdCamera camera{};
 
 		auto viewerObject = LdGameObject::createGameObject();
 		viewerObject.transform.translation.z = -2.5f;
 		KeyboardMovementController cameraController{};
 
-
 		auto currentTime = std::chrono::high_resolution_clock::now();
-		while (!ldWindow.shouldClose())
+		while (!m_window.shouldClose())
 		{
 			glfwPollEvents();
 
@@ -84,22 +77,23 @@ namespace ld {
 			float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
 			currentTime = newTime;
 
-			cameraController.moveInPlaneXZ(ldWindow.getGLFWwindow(), frameTime, viewerObject);
+			cameraController.moveInPlaneXZ(m_window.getGLFWwindow(), frameTime, viewerObject);
 			camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
-			float aspect = ldRenderer.getAspectRatio();
+			float aspect = m_renderer.getAspectRatio();
 			camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
 
 			// beginFrame() returns nullptr if swapchain needs to be recreated
-			if (auto commandBuffer = ldRenderer.beginFrame()) {
-				int frameIndex = ldRenderer.getFrameIndex();
+			if (auto commandBuffer = m_renderer.beginFrame()) 
+			{
+				int frameIndex = m_renderer.getFrameIndex();
 				FrameInfo frameInfo{
 					frameIndex,
 					frameTime,
 					commandBuffer,
 					camera,
 					globalDescriptorSets[frameIndex],
-					gameObjects
+					m_gameObjects
 				};
 				// update objects in memory
 				GlobalUBO ubo{};
@@ -112,42 +106,40 @@ namespace ld {
 
 				// additional render passes can be added here later
 				//render
-				ldRenderer.beginSwapChainRenderPass(commandBuffer);
+				m_renderer.beginSwapChainRenderPass(commandBuffer);
 				
 				simpleRenderSystem.renderGameObjects(frameInfo);
 				pointLightSystem.render(frameInfo);
 				
-				ldRenderer.endSwapChainRenderPass(commandBuffer);
-				ldRenderer.endFrame();
+				m_renderer.endSwapChainRenderPass(commandBuffer);
+				m_renderer.endFrame();
 			}
 		}
-		vkDeviceWaitIdle(ldDevice.device());
+		vkDeviceWaitIdle(m_device.device());
 	}
-
-
 
 	void App::loadGameObjects()
 	{
-		std::shared_ptr<LdModel> ldModel = LdModel::createModelFromFile(ldDevice, "models/flat_vase.obj");
+		std::shared_ptr<LdModel> ldModel = LdModel::createModelFromFile(m_device, "models/flat_vase.obj");
 		auto flatVase = LdGameObject::createGameObject();
 		flatVase.model = ldModel;
 		flatVase.transform.translation = { -.5f, .5f, 0.f };
 		flatVase.transform.scale = { 3.f,1.5f, 3.f };
-		gameObjects.emplace(flatVase.getId(), std::move(flatVase));
+		m_gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
-		ldModel = LdModel::createModelFromFile(ldDevice, "models/smooth_vase.obj");
+		ldModel = LdModel::createModelFromFile(m_device, "models/smooth_vase.obj");
 		auto smoothVase = LdGameObject::createGameObject();
 		smoothVase.model = ldModel;
 		smoothVase.transform.translation = { .5f, .5f, 0.f };
 		smoothVase.transform.scale = { 3.f,1.5f, 3.f };
-		gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
+		m_gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
 
-		ldModel = LdModel::createModelFromFile(ldDevice, "models/quad.obj");
+		ldModel = LdModel::createModelFromFile(m_device, "models/quad.obj");
 		auto floor = LdGameObject::createGameObject();
 		floor.model = ldModel;
 		floor.transform.translation = { 0.f, .5f, 0.f };
 		floor.transform.scale = { 3.f,1.f, 3.f };
-		gameObjects.emplace(floor.getId(), std::move(floor));
+		m_gameObjects.emplace(floor.getId(), std::move(floor));
 
 		std::vector<glm::vec3> lightColors{
 			 {1.f, .1f, .1f},
@@ -168,7 +160,9 @@ namespace ld {
 				{ 0.f, -1.f, 0.f }
 			);
 			pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
-			gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+			m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
 		}
+
+		std::unique_ptr<LdTexture> texture = LdTexture::createTextureFromFile(m_device, "textures/texture.jpg");
 	}
 }

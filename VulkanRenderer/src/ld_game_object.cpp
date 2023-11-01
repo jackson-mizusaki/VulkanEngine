@@ -1,6 +1,6 @@
 #include "ld_game_object.hpp"
 
-namespace ld {
+namespace Ld {
 	glm::mat4 TransformComponent::mat4()
 	{
 

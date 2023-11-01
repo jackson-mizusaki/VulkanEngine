@@ -9,47 +9,46 @@
 #include <memory>
 #include <vector>
 
-namespace ld {
+namespace Ld {
 	class LdRenderer {
-	public:
+	public: // constructors
 		LdRenderer(LdWindow& window, LdDevice& device);
 		~LdRenderer();
-
 		LdRenderer(const LdRenderer&) = delete;
 		LdRenderer& operator=(const LdRenderer&) = delete;
-	private:
-		LdWindow& ldWindow;
-		LdDevice& ldDevice;
-		std::unique_ptr<LdSwapChain> ldSwapChain;
-		std::vector<VkCommandBuffer> commandBuffers;
 
-
-		uint32_t currentImageIndex;
-		int currentFrameIndex; // from 0 - max_frames_in_flight
-		bool isFrameStarted;
-
-	public:
-		VkRenderPass getSwapChainRenderPass() const { return ldSwapChain->getRenderPass(); }
-		bool isFrameInProgress() const { return isFrameStarted; }
-		VkCommandBuffer getCurrentCommandBuffer() const 
+	public: // functions
+		VkRenderPass getSwapChainRenderPass() const { return m_swapChain->getRenderPass(); }
+		bool isFrameInProgress() const { return m_isFrameStarted; }
+		VkCommandBuffer getCurrentCommandBuffer() const
 		{
-			assert(isFrameStarted && "Cannot get command buffer when frame not i n progress");
-			return commandBuffers[currentFrameIndex];
+			assert(m_isFrameStarted && "Cannot get command buffer when frame not i n progress");
+			return m_commandBuffers[m_currentFrameIndex];
 		}
-		int getFrameIndex() const 
+		int getFrameIndex() const
 		{
-			assert(isFrameStarted && "Cannot get command buffer when frame not i n progress");
-			return currentFrameIndex;
+			assert(m_isFrameStarted && "Cannot get command buffer when frame not i n progress");
+			return m_currentFrameIndex;
 		}
-		float getAspectRatio() const { return ldSwapChain->extentAspectRatio(); }
+		float getAspectRatio() const { return m_swapChain->extentAspectRatio(); }
 		VkCommandBuffer beginFrame();
 		void endFrame();
 		void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
 		void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
-
 	private:
 		void createCommandBuffers();
 		void freeCommandBuffers();
 		void recreateSwapChain();
+
+	public: // data
+	private:
+		LdWindow& m_window;
+		LdDevice& m_device;
+		std::unique_ptr<LdSwapChain> m_swapChain;
+		std::vector<VkCommandBuffer> m_commandBuffers;
+
+		uint32_t m_currentImageIndex;
+		int m_currentFrameIndex; // from 0 - max_frames_in_flight
+		bool m_isFrameStarted;
 	};
 }

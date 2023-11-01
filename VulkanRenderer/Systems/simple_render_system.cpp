@@ -9,14 +9,14 @@
 #include <stdexcept>
 #include <array>
 
-namespace ld {
+namespace Ld {
 	struct SimplePushConstantData {
 		glm::mat4 modelMatrix{ 1.f };
 		glm::mat4 normalMatrix{ 1.f };
 	};
 
 	SimpleRenderSystem::SimpleRenderSystem(LdDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
-		: ldDevice{device}
+		: m_device{device}
 	{
 		createPipelineLayout(globalSetLayout);
 		createPipeline(renderPass);
@@ -24,7 +24,7 @@ namespace ld {
 
 	SimpleRenderSystem::~SimpleRenderSystem()
 	{
-		vkDestroyPipelineLayout(ldDevice.device(), pipelineLayout, nullptr);
+		vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr);
 	}
 
 
@@ -44,7 +44,7 @@ namespace ld {
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
-		if (vkCreatePipelineLayout(ldDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+		if (vkCreatePipelineLayout(m_device.device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
@@ -52,14 +52,14 @@ namespace ld {
 
 	void SimpleRenderSystem::createPipeline(VkRenderPass renderPass)
 	{
-		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+		assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 		PipelineConfigInfo pipelineConfig{};
 		LdPipeline::defaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
-		pipelineConfig.pipelineLayout = pipelineLayout;
-		ldPipeline = std::make_unique<LdPipeline>(
-			ldDevice,
+		pipelineConfig.pipelineLayout = m_pipelineLayout;
+		m_pipeline = std::make_unique<LdPipeline>(
+			m_device,
 			"shaders/simple_shader.vert.spv",
 			"shaders/simple_shader.frag.spv",
 			pipelineConfig
@@ -68,9 +68,9 @@ namespace ld {
 
 	void SimpleRenderSystem::renderGameObjects(FrameInfo &frameInfo)
 	{
-		ldPipeline->bind(frameInfo.commandBuffer);
+		m_pipeline->bind(frameInfo.commandBuffer);
 
-		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
 
 		for (auto& kv : frameInfo.gameObjects)
 		{
@@ -80,7 +80,7 @@ namespace ld {
 			auto modelMatrix = obj.transform.mat4();
 			push.modelMatrix = obj.transform.mat4();
 			push.normalMatrix = obj.transform.normalMatrix();
-			vkCmdPushConstants(frameInfo.commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
+			vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
 
 			obj.model->bind(frameInfo.commandBuffer);
 			obj.model->draw(frameInfo.commandBuffer);

@@ -11,7 +11,21 @@
 #include <cassert>
 #include <cstring>
 
-namespace ld {
+namespace Ld {
+	LdBuffer::LdBuffer(LdDevice& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
+		: m_ldDevice{ device }, m_instanceSize{ instanceSize }, m_instanceCount{ instanceCount }, m_usageFlags{ usageFlags }, m_memoryPropertyFlags{ memoryPropertyFlags }
+	{
+		m_alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+		m_bufferSize = m_alignmentSize * instanceCount;
+		device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_memory);
+	}
+
+	LdBuffer::~LdBuffer()
+	{
+		unmap();
+		vkDestroyBuffer(m_ldDevice.device(), m_buffer, nullptr);
+		vkFreeMemory(m_ldDevice.device(), m_memory, nullptr);
+	}
 
 	/**
 	 * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
@@ -29,23 +43,6 @@ namespace ld {
 		return instanceSize;
 	}
 
-
-
-	LdBuffer::LdBuffer(LdDevice& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
-		: ldDevice{ device }, instanceSize{ instanceSize }, instanceCount{ instanceCount }, usageFlags{ usageFlags }, memoryPropertyFlags{ memoryPropertyFlags }
-	{
-		alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
-		bufferSize = alignmentSize * instanceCount;
-		device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
-	}
-
-	LdBuffer::~LdBuffer()
-	{
-		unmap();
-		vkDestroyBuffer(ldDevice.device(), buffer, nullptr);
-		vkFreeMemory(ldDevice.device(), memory, nullptr);
-	}
-
 	/**
 	 * Map a memory range of this buffer. If successful, mapped points to the specified buffer range.
 	 *
@@ -57,8 +54,8 @@ namespace ld {
 	 */
 	VkResult LdBuffer::map(VkDeviceSize size, VkDeviceSize offset)
 	{
-		assert(buffer && memory && "Called map on buffer before create");
-		return vkMapMemory(ldDevice.device(), memory, offset, size, 0, &mapped);
+		assert(m_buffer && m_memory && "Called map on buffer before create");
+		return vkMapMemory(m_ldDevice.device(), m_memory, offset, size, 0, &m_mapped);
 	}
 
 	/**
@@ -68,10 +65,10 @@ namespace ld {
 	 */
 	void LdBuffer::unmap()
 	{
-		if (mapped)
+		if (m_mapped)
 		{
-			vkUnmapMemory(ldDevice.device(), memory);
-			mapped = nullptr;
+			vkUnmapMemory(m_ldDevice.device(), m_memory);
+			m_mapped = nullptr;
 		}
 	}
 
@@ -86,15 +83,15 @@ namespace ld {
 	 */
 	void LdBuffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset)
 	{
-		assert(mapped && "Cannot copy to unmapped buffer");
+		assert(m_mapped && "Cannot copy to unmapped buffer");
 
 		if (size == VK_WHOLE_SIZE)
 		{
-			memcpy(mapped, data, bufferSize);
+			memcpy(m_mapped, data, m_bufferSize);
 		}
 		else
 		{
-			char* memOffset = (char*)mapped;
+			char* memOffset = (char*)m_mapped;
 			memOffset += offset;
 			memcpy(memOffset, data, size);
 		}
@@ -115,10 +112,10 @@ namespace ld {
 	{
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory = memory;
+		mappedRange.memory = m_memory;
 		mappedRange.offset = offset;
 		mappedRange.size = size;
-		return vkFlushMappedMemoryRanges(ldDevice.device(), 1, &mappedRange);
+		return vkFlushMappedMemoryRanges(m_ldDevice.device(), 1, &mappedRange);
 	}
 
 	/**
@@ -136,10 +133,10 @@ namespace ld {
 	{
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory = memory;
+		mappedRange.memory = m_memory;
 		mappedRange.offset = offset;
 		mappedRange.size = size;
-		return vkInvalidateMappedMemoryRanges(ldDevice.device(), 1, &mappedRange);
+		return vkInvalidateMappedMemoryRanges(m_ldDevice.device(), 1, &mappedRange);
 	}
 
 	/**
@@ -153,7 +150,7 @@ namespace ld {
 	VkDescriptorBufferInfo LdBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
 	{
 		return VkDescriptorBufferInfo{
-			buffer,
+			m_buffer,
 			offset,
 			size,
 		};
@@ -168,7 +165,7 @@ namespace ld {
 	 */
 	void LdBuffer::writeToIndex(void* data, int index)
 	{
-		writeToBuffer(data, instanceSize, index * alignmentSize);
+		writeToBuffer(data, m_instanceSize, index * m_alignmentSize);
 	}
 
 	/**
@@ -179,7 +176,7 @@ namespace ld {
 	 */
 	VkResult LdBuffer::flushIndex(int index)
 	{
-		return flush(alignmentSize, index * alignmentSize);
+		return flush(m_alignmentSize, index * m_alignmentSize);
 	}
 
 	/**
@@ -191,7 +188,7 @@ namespace ld {
 	 */
 	VkDescriptorBufferInfo LdBuffer::descriptorInfoForIndex(int index)
 	{
-		return descriptorInfo(alignmentSize, index * alignmentSize);
+		return descriptorInfo(m_alignmentSize, index * m_alignmentSize);
 	}
 
 	/**
@@ -205,7 +202,7 @@ namespace ld {
 	 */
 	VkResult LdBuffer::invalidateIndex(int index)
 	{
-		return invalidate(alignmentSize, index * alignmentSize);
+		return invalidate(m_alignmentSize, index * m_alignmentSize);
 	}
 
 }  // namespace Ld

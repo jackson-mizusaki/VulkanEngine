@@ -9,24 +9,24 @@
 #include <memory>
 #include <vector>
 
-namespace ld {
+namespace Ld {
 	class SimpleRenderSystem {
-	public:
+	public: // constructors
 		SimpleRenderSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~SimpleRenderSystem();
 		SimpleRenderSystem(const SimpleRenderSystem&) = delete;
 		SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
-	
-	private:
-		LdDevice &ldDevice;
-		std::unique_ptr<LdPipeline> ldPipeline;
-		VkPipelineLayout pipelineLayout;
 
-	public:
-		void renderGameObjects(FrameInfo &frameInfo);
-
+	public: // functions
+		void renderGameObjects(FrameInfo& frameInfo);
 	private:
 		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void createPipeline(VkRenderPass renderPass);
+
+	public: // data
+	private:
+		LdDevice &m_device;
+		std::unique_ptr<LdPipeline> m_pipeline;
+		VkPipelineLayout m_pipelineLayout;
 	};
 }

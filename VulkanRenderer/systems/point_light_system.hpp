@@ -9,25 +9,26 @@
 #include <memory>
 #include <vector>
 
-namespace ld {
+namespace Ld {
 	class PointLightSystem {
-	public:
+	public: // constructors
 		PointLightSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~PointLightSystem();
 		PointLightSystem(const PointLightSystem&) = delete;
 		PointLightSystem& operator=(const PointLightSystem&) = delete;
 
-	private:
-		LdDevice& ldDevice;
-		std::unique_ptr<LdPipeline> ldPipeline;
-		VkPipelineLayout pipelineLayout;
-
-	public:
+	public: // functions
 		void render(FrameInfo& frameInfo);
 		void update(FrameInfo& frameInfo, GlobalUBO& ubo);
-	
 	private:
 		void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
 		void createPipeline(VkRenderPass renderPass);
+
+	public: // data
+	private:
+		LdDevice& m_device;
+		std::unique_ptr<LdPipeline> m_pipeline;
+		VkPipelineLayout m_pipelineLayout;
+
 	};
 }

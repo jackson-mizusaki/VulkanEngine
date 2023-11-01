@@ -4,10 +4,10 @@
 #include <stdexcept>
 #include <array>
 
-namespace ld {
+namespace Ld {
 
 
-	LdRenderer::LdRenderer(LdWindow &window, LdDevice & device) : ldWindow{window}, ldDevice{device}
+	LdRenderer::LdRenderer(LdWindow &window, LdDevice & device) : m_window{window}, m_device{device}
 	{
 		recreateSwapChain();
 		createCommandBuffers();
@@ -20,8 +20,8 @@ namespace ld {
 
 	VkCommandBuffer LdRenderer::beginFrame()
 	{
-		assert(!isFrameStarted && "can't call beginFrame while already in progress");		
-		auto result = ldSwapChain->acquireNextImage(&currentImageIndex);
+		assert(!m_isFrameStarted && "can't call beginFrame while already in progress");		
+		auto result = m_swapChain->acquireNextImage(&m_currentImageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
@@ -35,7 +35,7 @@ namespace ld {
 			throw std::runtime_error("failed to acquire swap chain image");
 		}
 
-		isFrameStarted = true;
+		m_isFrameStarted = true;
 		 
 		auto commandBuffer = getCurrentCommandBuffer();
 		VkCommandBufferBeginInfo beginInfo{};
@@ -50,17 +50,17 @@ namespace ld {
 
 	void LdRenderer::endFrame()
 	{
-		assert(isFrameStarted && "can't call endframe while frame is not in progress");
+		assert(m_isFrameStarted && "can't call endframe while frame is not in progress");
 		auto commandBuffer = getCurrentCommandBuffer();
 		if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to record command buffer");
 		}
 
-		auto result = ldSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || ldWindow.wasWindowResized())
+		auto result = m_swapChain->submitCommandBuffers(&commandBuffer, &m_currentImageIndex);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.wasWindowResized())
 		{
-			ldWindow.resetWindowResizedFlag();
+			m_window.resetWindowResizedFlag();
 			recreateSwapChain();
 		}
 		else if (result != VK_SUCCESS)
@@ -68,23 +68,23 @@ namespace ld {
 			throw std::runtime_error("failed to present swap chain image");
 		}
 
-		isFrameStarted = false;
-		currentFrameIndex = (currentFrameIndex + 1) % LdSwapChain::MAX_FRAMES_IN_FLIGHT;
+		m_isFrameStarted = false;
+		m_currentFrameIndex = (m_currentFrameIndex + 1) % LdSwapChain::s_maxFramesInFlight;
 	}
 
 	void LdRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
 	{
-		assert(isFrameStarted && "Can't call beginSwapChainREnderPass if frame is not in progress");
+		assert(m_isFrameStarted && "Can't call beginSwapChainREnderPass if frame is not in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() &&
 			"Can't begin render pass on command buffer from a different frame");
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = ldSwapChain->getRenderPass();
-		renderPassInfo.framebuffer = ldSwapChain->getFrameBuffer(currentImageIndex);
+		renderPassInfo.renderPass = m_swapChain->getRenderPass();
+		renderPassInfo.framebuffer = m_swapChain->getFrameBuffer(m_currentImageIndex);
 
 		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = ldSwapChain->getSwapChainExtent();
+		renderPassInfo.renderArea.extent = m_swapChain->getSwapChainExtent();
 
 		std::array<VkClearValue, 2> clearValues{};
 		clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f };
@@ -97,18 +97,18 @@ namespace ld {
 		VkViewport viewport{};
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(ldSwapChain->getSwapChainExtent().width);
-		viewport.height = static_cast<float>(ldSwapChain->getSwapChainExtent().height);
+		viewport.width = static_cast<float>(m_swapChain->getSwapChainExtent().width);
+		viewport.height = static_cast<float>(m_swapChain->getSwapChainExtent().height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		VkRect2D scissor{ {0, 0}, ldSwapChain->getSwapChainExtent() };
+		VkRect2D scissor{ {0, 0}, m_swapChain->getSwapChainExtent() };
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
 	void LdRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
 	{
-		assert(isFrameStarted && "Can't call beginSwapChainREnderPass if frame is not in progress");
+		assert(m_isFrameStarted && "Can't call beginSwapChainREnderPass if frame is not in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() &&
 			"Can't begin render pass on command buffer from a different frame");
 
@@ -117,55 +117,49 @@ namespace ld {
 
 	void LdRenderer::createCommandBuffers()
 	{
-		commandBuffers.resize(LdSwapChain::MAX_FRAMES_IN_FLIGHT);
+		m_commandBuffers.resize(LdSwapChain::s_maxFramesInFlight);
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = ldDevice.getCommandPool();
-		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+		allocInfo.commandPool = m_device.getCommandPool();
+		allocInfo.commandBufferCount = static_cast<uint32_t>(m_commandBuffers.size());
 
-		if (vkAllocateCommandBuffers(ldDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+		if (vkAllocateCommandBuffers(m_device.device(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to allocate command buffers");
 		}
 	}
 
-
 	void LdRenderer::freeCommandBuffers()
 	{
-		vkFreeCommandBuffers(ldDevice.device(), ldDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-		commandBuffers.clear();
+		vkFreeCommandBuffers(m_device.device(), m_device.getCommandPool(), static_cast<uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
+		m_commandBuffers.clear();
 	}
-
-
 
 	void LdRenderer::recreateSwapChain()
 	{
-		auto extent = ldWindow.getExtent();
+		auto extent = m_window.getExtent();
 		while (extent.width == 0 || extent.height == 0)
 		{
-			extent = ldWindow.getExtent();
+			extent = m_window.getExtent();
 			glfwWaitEvents();
 		}
-		vkDeviceWaitIdle(ldDevice.device());
+		vkDeviceWaitIdle(m_device.device());
 
-		if (ldSwapChain == nullptr)
+		if (m_swapChain == nullptr)
 		{
-			ldSwapChain = std::make_unique<LdSwapChain>(ldDevice, extent);
+			m_swapChain = std::make_unique<LdSwapChain>(m_device, extent);
 		}
 		else
 		{
-			std::shared_ptr<LdSwapChain> oldSwapChain = std::move(ldSwapChain);
-			ldSwapChain = std::make_unique<LdSwapChain>(ldDevice, extent, oldSwapChain);
+			std::shared_ptr<LdSwapChain> oldSwapChain = std::move(m_swapChain);
+			m_swapChain = std::make_unique<LdSwapChain>(m_device, extent, oldSwapChain);
 
-			if (!oldSwapChain->compareSwapFormats(*ldSwapChain.get())) 
+			if (!oldSwapChain->compareSwapFormats(*m_swapChain.get())) 
 			{
 				throw std::runtime_error("Swap chain image(or depth) format has changed!");
 			}
-
 		}
 		// if render pass compatible, do nothing.
 	}
-
-
 }

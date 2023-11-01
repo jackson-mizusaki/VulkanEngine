@@ -7,7 +7,7 @@
 #include <vulkan/vulkan.h>
 
 
-namespace ld {
+namespace Ld {
 #define MAX_LIGHTS 10
 
 	struct PointLight {

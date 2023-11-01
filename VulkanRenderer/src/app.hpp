@@ -9,28 +9,28 @@
 #include <memory>
 #include <vector>
 
-namespace ld {
+namespace Ld {
 	class App {
-	public:
+	public: // constructors
 		App();
 		~App();
 		App(const App&) = delete;
 		App& operator=(const App&) = delete;
 
-	public:
+	public: // functions
+		void run();
+	private:
+		void loadGameObjects();
+
+	public: // data
 		static constexpr int WIDTH = 800;
 		static constexpr int HEIGHT = 600;
 	private:
-		LdWindow ldWindow{ WIDTH, HEIGHT, "App Window" };
-		LdDevice ldDevice{ ldWindow };
-		LdRenderer ldRenderer{ ldWindow, ldDevice };
+		LdWindow m_window{ WIDTH, HEIGHT, "App Window" };
+		LdDevice m_device{ m_window };
+		LdRenderer m_renderer{ m_window, m_device };
 
-		std::unique_ptr<LdDescriptorPool> globalPool{};
-		LdGameObject::Map gameObjects;
-	public:
-		void run();
-
-	private:
-		void loadGameObjects();
+		std::unique_ptr<LdDescriptorPool> m_globalPool{};
+		LdGameObject::Map m_gameObjects;
 	};
 }

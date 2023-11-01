@@ -10,7 +10,7 @@
 #include <map>
 #include <array>
 
-namespace ld {
+namespace Ld {
 	struct PointLightPushConstants {
 		glm::vec4 position{};
 		glm::vec4 color{};
@@ -18,7 +18,7 @@ namespace ld {
 	};
 
 	PointLightSystem::PointLightSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
-		: ldDevice{ device }
+		: m_device{ device }
 	{
 		createPipelineLayout(globalSetLayout);
 		createPipeline(renderPass);
@@ -26,7 +26,7 @@ namespace ld {
 
 	PointLightSystem::~PointLightSystem()
 	{
-		vkDestroyPipelineLayout(ldDevice.device(), pipelineLayout, nullptr);
+		vkDestroyPipelineLayout(m_device.device(), m_pipelineLayout, nullptr);
 	}
 
 
@@ -46,7 +46,7 @@ namespace ld {
 		pipelineLayoutInfo.pushConstantRangeCount = 1;
 		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
-		if (vkCreatePipelineLayout(ldDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+		if (vkCreatePipelineLayout(m_device.device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
@@ -54,7 +54,7 @@ namespace ld {
 
 	void PointLightSystem::createPipeline(VkRenderPass renderPass)
 	{
-		assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
+		assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 		PipelineConfigInfo pipelineConfig{};
 		LdPipeline::defaultPipelineConfigInfo(pipelineConfig);
@@ -62,9 +62,9 @@ namespace ld {
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.bindingDescriptions.clear();
 		pipelineConfig.renderPass = renderPass;
-		pipelineConfig.pipelineLayout = pipelineLayout;
-		ldPipeline = std::make_unique<LdPipeline>(
-			ldDevice,
+		pipelineConfig.pipelineLayout = m_pipelineLayout;
+		m_pipeline = std::make_unique<LdPipeline>(
+			m_device,
 			"shaders/point_light.vert.spv",
 			"shaders/point_light.frag.spv",
 			pipelineConfig
@@ -86,9 +86,9 @@ namespace ld {
 			sorted[disSquared] = obj.getId();
 		}
 
-		ldPipeline->bind(frameInfo.commandBuffer);
+		m_pipeline->bind(frameInfo.commandBuffer);
 
-		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
 
 		// iterate through sorted elements in reverse order
 		for (auto it = sorted.rbegin(); it != sorted.rend(); ++it)
@@ -102,7 +102,7 @@ namespace ld {
 
 			vkCmdPushConstants(
 				frameInfo.commandBuffer,
-				pipelineLayout,
+				m_pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 				0,
 				sizeof(PointLightPushConstants),

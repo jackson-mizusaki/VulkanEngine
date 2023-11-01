@@ -5,7 +5,7 @@
 
 int main() 
 {
-	ld::App app{};
+	Ld::App app{};
 
 	try
 	{

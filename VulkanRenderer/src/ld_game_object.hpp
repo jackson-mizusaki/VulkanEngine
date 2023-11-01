@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
 #include <unordered_map>
-namespace ld {
+namespace Ld {
 	struct TransformComponent {
 		glm::vec3 translation{};
 		glm::vec3 scale{ 1.f,1.f,1.f };
@@ -23,18 +23,19 @@ namespace ld {
 	};
 
 	class LdGameObject {
-	public:
+	public: // types
 		using id_t = unsigned int;
 		using Map = std::unordered_map<id_t, LdGameObject>;
+
+	public: // constructors
 		LdGameObject(const LdGameObject&) = delete;
 		LdGameObject& operator=(const LdGameObject&) = delete;
 		LdGameObject(LdGameObject&&) = default;
 		LdGameObject& operator=(LdGameObject&&) = default;
-
 	private:
-		LdGameObject(id_t objId) : id{ objId } {}
+		LdGameObject(id_t objId) : m_id{ objId } {}
 
-	public:
+	public: // data
 		glm::vec3 color{};
 		TransformComponent transform{};
 
@@ -42,15 +43,15 @@ namespace ld {
 		std::shared_ptr<LdModel> model{};
 		std::unique_ptr<PointLightComponent> pointLight = nullptr;
 	private:
-		id_t id;
+		id_t m_id;
 
-	public:
+	public: // functions
 		static LdGameObject makePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f));
 		static LdGameObject createGameObject()
 		{
 			static id_t currentId = 0;
 			return LdGameObject{ currentId++ };
 		}
-		const id_t getId() { return id; }
+		const id_t getId() { return m_id; }
 	};
 }
