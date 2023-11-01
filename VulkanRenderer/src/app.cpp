@@ -36,14 +36,19 @@ namespace Ld {
 		std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::s_maxFramesInFlight);
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
+			VmaAllocationCreateInfo uboInfo{};
+			uboInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 			uboBuffers[i] = std::make_unique<Buffer>(
 				m_device,
 				sizeof(GlobalUBO),
 				1,
 				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+				uboInfo
 			);
-			uboBuffers[i]->map();
+			if (uboBuffers[i]->map() != VK_SUCCESS)
+			{
+				throw std::runtime_error("couldn't map buffers");
+			}
 		}
 
 		auto globalSetLayout = DescriptorSetLayout::Builder(m_device)

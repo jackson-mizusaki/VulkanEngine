@@ -23,7 +23,6 @@ namespace Ld {
 
 		// fix for order-dependent alpha rendering. will be improved later
 		const glm::vec3 getPosition() const { return glm::vec3(m_inverseViewMatrix[3]); }
-
 	private:
 
 	public: // data
@@ -31,8 +30,5 @@ namespace Ld {
 		glm::mat4 m_projectionMatrix{ 1.f };
 		glm::mat4 m_viewMatrix{ 1.f };
 		glm::mat4 m_inverseViewMatrix{ 1.f };
-
-
-
 	};
 }

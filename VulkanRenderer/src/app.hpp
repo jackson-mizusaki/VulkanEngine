@@ -6,6 +6,7 @@
 #include "ld_model.hpp"
 #include "ld_game_object.hpp"
 #include "ld_descriptors.hpp"
+#include "vk_mem_alloc.h"
 #include <memory>
 #include <vector>
 

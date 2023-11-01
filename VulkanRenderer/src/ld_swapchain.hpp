@@ -67,7 +67,7 @@ namespace Ld {
         VkRenderPass m_renderPass;
 
         std::vector<VkImage> m_depthImages;
-        std::vector<VkDeviceMemory> m_depthImageMemorys;
+        std::vector<VmaAllocation> m_depthImageAllocations;
         std::vector<VkImageView> m_depthImageViews;
         std::vector<VkImage> m_swapChainImages;
         std::vector<VkImageView> m_swapChainImageViews;

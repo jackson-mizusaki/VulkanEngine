@@ -22,7 +22,7 @@ namespace Ld {
 	private: // data
 		Device& m_device;
 		VkImage m_textureImage = nullptr;
-		VkDeviceMemory m_textureImageMemory = nullptr;
+		VmaAllocation m_allocation;
 		VkImageView m_textureImageView = nullptr;
 		VkSampler m_textureSampler = nullptr;
 		VkFormat m_format;

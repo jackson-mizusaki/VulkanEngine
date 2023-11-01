@@ -1,18 +1,26 @@
 #pragma once
 
-#include "ld_device.hpp"
+#include "ld_device.hpp" 
+#include "ld_allocator.hpp"
 
 namespace Ld {
 
 	class Buffer {
 	public: // constructors
-		Buffer(
+/*		Buffer(
 			Device& device,
 			VkDeviceSize instanceSize,
 			uint32_t instanceCount,
 			VkBufferUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryPropertyFlags,
-			VkDeviceSize minOffsetAlignment = 1);
+			VkDeviceSize minOffsetAlignment = 1);	*/	
+		Buffer(
+				Device& device,
+				VkDeviceSize instanceSize,
+				uint32_t instanceCount,
+				VkBufferUsageFlags usageFlags,
+				VmaAllocationCreateInfo& allocInfo,
+				VkDeviceSize minOffsetAlignment = 1);
 		~Buffer();
 
 		Buffer(const Buffer&) = delete;
@@ -44,10 +52,11 @@ namespace Ld {
 
 	public: // data
 	private:
-		Device& m_ldDevice;
+		Device& m_device;
 		void* m_mapped = nullptr;
 		VkBuffer m_buffer = VK_NULL_HANDLE;
 		VkDeviceMemory m_memory = VK_NULL_HANDLE;
+		VmaAllocation m_allocation;
 
 		VkDeviceSize m_bufferSize;
 		uint32_t m_instanceCount;
@@ -55,6 +64,7 @@ namespace Ld {
 		VkDeviceSize m_alignmentSize;
 		VkBufferUsageFlags m_usageFlags;
 		VkMemoryPropertyFlags m_memoryPropertyFlags;
+
 	};
 
 }  // namespace Ld

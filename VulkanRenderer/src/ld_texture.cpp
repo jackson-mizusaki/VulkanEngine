@@ -17,6 +17,7 @@ namespace Ld {
 	Texture::~Texture()
 	{
 		vkDestroySampler(m_device.device(), m_textureSampler, nullptr);
+		vmaDestroyImage(m_device.getAllocator(), m_textureImage, m_allocation);
 	}
 
 	std::unique_ptr<Texture> Texture::createTextureFromFile(Device& device, const std::string& filepath)
@@ -34,12 +35,15 @@ namespace Ld {
 			throw std::runtime_error("failed to load texture image!");
 		}
 
+		VmaAllocationCreateInfo stagingInfo{};
+		stagingInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
 		Buffer stagingBuffer{
 			m_device,
 			imageSize,
 			1,
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			stagingInfo
 		};
 		 
 		stagingBuffer.map();
@@ -67,11 +71,14 @@ namespace Ld {
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
+		VmaAllocationCreateInfo imageAllocInfo{};
+		imageAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
 		m_device.createImageWithInfo(
 			imageInfo,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			m_textureImage,
-			m_textureImageMemory
+			m_allocation,
+			imageAllocInfo			
 		);
 		m_device.transitionImageLayout(
 			m_textureImage,

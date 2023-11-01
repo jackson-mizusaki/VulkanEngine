@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ld_window.hpp"
-
+#include "vk_mem_alloc.h"
 // std lib headers
 #include <string>
 #include <vector>
@@ -22,6 +22,7 @@ namespace Ld {
 	};
 
 	class Device {
+		friend class Allocator;
 	public: // constructors
 		Device(Window& window);
 		~Device();
@@ -42,25 +43,29 @@ namespace Ld {
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 		QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(m_physicalDevice); }
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+		VmaAllocator getAllocator() { return m_allocator;  }
 
 		// Buffer Helper Functions
 		void createBuffer(
 			VkDeviceSize size,
 			VkBufferUsageFlags usage,
-			VkMemoryPropertyFlags properties,
 			VkBuffer& buffer,
-			VkDeviceMemory& bufferMemory);
+			VmaAllocation& allocation,
+			VmaAllocationCreateInfo& allocInfo);
+
+		void createImageWithInfo(const VkImageCreateInfo& imageInfo,
+			VkImage& image,
+			VmaAllocation& allocation,
+			VmaAllocationCreateInfo& allocInfo);
 		VkCommandBuffer beginSingleTimeCommands();
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 		void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-		void createImageWithInfo(const VkImageCreateInfo& imageInfo,
-			VkMemoryPropertyFlags properties,
-			VkImage& image,
-			VkDeviceMemory& imageMemory);
+
 
 	private:
+		void createAllocator();
 		void createInstance();
 		void setupDebugMessenger();
 		void createSurface();
@@ -68,6 +73,7 @@ namespace Ld {
 		void createLogicalDevice();
 		void createCommandPool();
 
+		
 		// helper functions
 		bool isDeviceSuitable(VkPhysicalDevice device);
 		std::vector<const char*> getRequiredExtensions();
@@ -96,6 +102,11 @@ namespace Ld {
 		VkSurfaceKHR m_surface;
 		VkQueue m_graphicsQueue;
 		VkQueue m_presentQueue;
+
+		VmaAllocator m_allocator;
+
+		//Allocator m_allocator{ m_device };
+
 
 		const std::vector<const char*> m_validationLayers = { "VK_LAYER_KHRONOS_validation" };
 		const std::vector<const char*> m_deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };

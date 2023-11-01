@@ -43,8 +43,7 @@ namespace Ld
         for (int i = 0; i < m_depthImages.size(); i++) 
         {
             vkDestroyImageView(m_device.device(), m_depthImageViews[i], nullptr);
-            vkDestroyImage(m_device.device(), m_depthImages[i], nullptr);
-            vkFreeMemory(m_device.device(), m_depthImageMemorys[i], nullptr);
+            vmaDestroyImage(m_device.getAllocator(), m_depthImages[i], m_depthImageAllocations[i]);
         }
 
         for (auto framebuffer : m_swapChainFramebuffers) 
@@ -329,7 +328,7 @@ namespace Ld
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
         m_depthImages.resize(imageCount());
-        m_depthImageMemorys.resize(imageCount());
+        m_depthImageAllocations.resize(imageCount());
         m_depthImageViews.resize(imageCount());
 
         for (int i = 0; i < m_depthImages.size(); i++) 
@@ -350,11 +349,15 @@ namespace Ld
             imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             imageInfo.flags = 0;
 
+            VmaAllocationCreateInfo imageAllocInfo{};
+            imageAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
             m_device.createImageWithInfo(
                 imageInfo,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 m_depthImages[i],
-                m_depthImageMemorys[i]);
+                m_depthImageAllocations[i],
+                imageAllocInfo
+            );
 
             VkImageViewCreateInfo viewInfo{};
             viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

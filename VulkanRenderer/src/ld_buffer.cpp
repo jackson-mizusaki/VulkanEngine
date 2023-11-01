@@ -12,19 +12,28 @@
 #include <cstring>
 
 namespace Ld {
-	Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
-		: m_ldDevice{ device }, m_instanceSize{ instanceSize }, m_instanceCount{ instanceCount }, m_usageFlags{ usageFlags }, m_memoryPropertyFlags{ memoryPropertyFlags }
-	{
+	//Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
+	//	: m_device{ device }, m_instanceSize{ instanceSize }, m_instanceCount{ instanceCount }, m_usageFlags{ usageFlags }, m_memoryPropertyFlags{ memoryPropertyFlags }
+	//{
+	//	m_alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
+	//	m_bufferSize = m_alignmentSize * instanceCount;
+	//	device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_allocation);
+	//}
+
+	Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VmaAllocationCreateInfo& allocInfo, VkDeviceSize minOffsetAlignment)
+		: m_device{ device }, m_instanceSize{ instanceSize }, m_instanceCount{ instanceCount }, m_usageFlags{ usageFlags }
+	{	 
 		m_alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
 		m_bufferSize = m_alignmentSize * instanceCount;
-		device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_memory);
+		device.createBuffer(m_bufferSize, usageFlags, m_buffer, m_allocation, allocInfo);
 	}
 
 	Buffer::~Buffer()
 	{
 		unmap();
-		vkDestroyBuffer(m_ldDevice.device(), m_buffer, nullptr);
-		vkFreeMemory(m_ldDevice.device(), m_memory, nullptr);
+		vmaDestroyBuffer(m_device.getAllocator(), m_buffer, m_allocation);
+		//vkDestroyBuffer(m_device.device(), m_buffer, nullptr);
+		vkFreeMemory(m_device.device(), m_memory, nullptr);
 	}
 
 	/**
@@ -54,8 +63,9 @@ namespace Ld {
 	 */
 	VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset)
 	{
-		assert(m_buffer && m_memory && "Called map on buffer before create");
-		return vkMapMemory(m_ldDevice.device(), m_memory, offset, size, 0, &m_mapped);
+		assert(m_buffer && m_allocation && "Called map on buffer before create");
+		return vmaMapMemory(m_device.getAllocator(), m_allocation, &m_mapped);
+		//return vkMapMemory(m_device.device(), m_memory, offset, size, 0, &m_mapped);
 	}
 
 	/**
@@ -67,7 +77,8 @@ namespace Ld {
 	{
 		if (m_mapped)
 		{
-			vkUnmapMemory(m_ldDevice.device(), m_memory);
+			vmaUnmapMemory(m_device.getAllocator(), m_allocation);
+			//vkUnmapMemory(m_device.device(), m_memory);
 			m_mapped = nullptr;
 		}
 	}
@@ -110,12 +121,13 @@ namespace Ld {
 	 */
 	VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset)
 	{
-		VkMappedMemoryRange mappedRange = {};
-		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory = m_memory;
-		mappedRange.offset = offset;
-		mappedRange.size = size;
-		return vkFlushMappedMemoryRanges(m_ldDevice.device(), 1, &mappedRange);
+		return vmaFlushAllocation(m_device.getAllocator(), m_allocation, offset, size);
+		//VkMappedMemoryRange mappedRange = {};
+		//mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		//mappedRange.memory = m_memory;
+		//mappedRange.offset = offset;
+		//mappedRange.size = size;
+		//return vkFlushMappedMemoryRanges(m_device.device(), 1, &mappedRange);
 	}
 
 	/**
@@ -131,12 +143,13 @@ namespace Ld {
 	 */
 	VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
 	{
-		VkMappedMemoryRange mappedRange = {};
-		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-		mappedRange.memory = m_memory;
-		mappedRange.offset = offset;
-		mappedRange.size = size;
-		return vkInvalidateMappedMemoryRanges(m_ldDevice.device(), 1, &mappedRange);
+		return vmaInvalidateAllocation(m_device.getAllocator(), m_allocation, offset, size);
+		//VkMappedMemoryRange mappedRange = {};
+		//mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+		//mappedRange.memory = m_memory;
+		//mappedRange.offset = offset;
+		//mappedRange.size = size;
+		//return vkInvalidateMappedMemoryRanges(m_device.device(), 1, &mappedRange);
 	}
 
 	/**
