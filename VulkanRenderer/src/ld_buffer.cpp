@@ -10,6 +10,7 @@
  // std
 #include <cassert>
 #include <cstring>
+#include <stdexcept>
 
 namespace Ld {
 	//Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
@@ -20,12 +21,12 @@ namespace Ld {
 	//	device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_allocation);
 	//}
 
-	Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VmaAllocationCreateInfo& allocInfo, VkDeviceSize minOffsetAlignment)
-		: m_device{ device }, m_instanceSize{ instanceSize }, m_instanceCount{ instanceCount }, m_usageFlags{ usageFlags }
+	Buffer::Buffer(Device& device, VkBufferCreateInfo& createInfo, VkDeviceSize instanceSize, uint32_t instanceCount, VmaAllocationCreateInfo& allocInfo, VkDeviceSize alignmentSize)
+		: m_device{ device }, m_instanceSize{ instanceSize }, m_alignmentSize { alignmentSize }
 	{	 
-		m_alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
 		m_bufferSize = m_alignmentSize * instanceCount;
-		device.createBuffer(m_bufferSize, usageFlags, m_buffer, m_allocation, allocInfo);
+		createInfo.size = m_bufferSize;
+		createBuffer(createInfo, allocInfo);
 	}
 
 	Buffer::~Buffer()
@@ -33,7 +34,7 @@ namespace Ld {
 		unmap();
 		vmaDestroyBuffer(m_device.getAllocator(), m_buffer, m_allocation);
 		//vkDestroyBuffer(m_device.device(), m_buffer, nullptr);
-		vkFreeMemory(m_device.device(), m_memory, nullptr);
+		//vkFreeMemory(m_device.device(), m_memory, nullptr);
 	}
 
 	/**
@@ -50,6 +51,16 @@ namespace Ld {
 			return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
 		}
 		return instanceSize;
+	}
+
+	void Buffer::createBuffer(VkBufferCreateInfo& createInfo, VmaAllocationCreateInfo& allocInfo)
+	{
+		assert(m_device.hasAllocator() && "allocator for device not created!");
+
+		if (vmaCreateBuffer(m_device.getAllocator(), &createInfo, &allocInfo, &m_buffer, &m_allocation, &m_allocationInfo) != VK_SUCCESS)
+		{
+			throw std::runtime_error("failed to create vertex buffer!");
+		}
 	}
 
 	/**

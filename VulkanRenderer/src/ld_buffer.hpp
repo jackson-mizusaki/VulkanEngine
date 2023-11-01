@@ -16,11 +16,12 @@ namespace Ld {
 			VkDeviceSize minOffsetAlignment = 1);	*/	
 		Buffer(
 				Device& device,
+				VkBufferCreateInfo& createInfo,
 				VkDeviceSize instanceSize,
 				uint32_t instanceCount,
-				VkBufferUsageFlags usageFlags,
 				VmaAllocationCreateInfo& allocInfo,
-				VkDeviceSize minOffsetAlignment = 1);
+				VkDeviceSize alignmentSize
+		);
 		~Buffer();
 
 		Buffer(const Buffer&) = delete;
@@ -28,12 +29,12 @@ namespace Ld {
 
 	public: // functions
 		VkBuffer getBuffer() const { return m_buffer; }
-		void* getMappedMemory() const { return m_mapped; }
-		uint32_t getInstanceCount() const { return m_instanceCount; }
-		VkDeviceSize getInstanceSize() const { return m_instanceSize; }
-		VkDeviceSize getAlignmentSize() const { return m_instanceSize; }
-		VkBufferUsageFlags getUsageFlags() const { return m_usageFlags; }
-		VkMemoryPropertyFlags getMemoryPropertyFlags() const { return m_memoryPropertyFlags; }
+		void* getMappedMemory() const { return m_allocationInfo.pMappedData; }
+		//uint32_t getInstanceCount() const { return m_instanceCount; }
+		//VkDeviceSize getInstanceSize() const { return m_instanceSize; }
+		//VkDeviceSize getAlignmentSize() const { return m_alignmentSize; }
+		//VkBufferUsageFlags getUsageFlags() const { return m_usageFlags; }
+		//VkMemoryPropertyFlags getMemoryPropertyFlags() const { return m_memoryPropertyFlags; }
 		VkDeviceSize getBufferSize() const { return m_bufferSize; }
 		VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		void unmap();
@@ -47,23 +48,25 @@ namespace Ld {
 		VkResult flushIndex(int index);
 		VkDescriptorBufferInfo descriptorInfoForIndex(int index);
 		VkResult invalidateIndex(int index);
-	private:
+
 		static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
+	private:
+		void createBuffer(VkBufferCreateInfo& createInfo, VmaAllocationCreateInfo& allocInfo);
 
 	public: // data
 	private:
 		Device& m_device;
 		void* m_mapped = nullptr;
 		VkBuffer m_buffer = VK_NULL_HANDLE;
-		VkDeviceMemory m_memory = VK_NULL_HANDLE;
 		VmaAllocation m_allocation;
+		VmaAllocationInfo m_allocationInfo{};
 
 		VkDeviceSize m_bufferSize;
-		uint32_t m_instanceCount;
+		//uint32_t m_instanceCount;
 		VkDeviceSize m_instanceSize;
 		VkDeviceSize m_alignmentSize;
-		VkBufferUsageFlags m_usageFlags;
-		VkMemoryPropertyFlags m_memoryPropertyFlags;
+		//VkBufferUsageFlags m_usageFlags;
+	//	VkMemoryPropertyFlags m_memoryPropertyFlags;
 
 	};
 

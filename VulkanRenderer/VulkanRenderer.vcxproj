@@ -171,6 +171,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\app.cpp" />
+    <ClCompile Include="src\image.cpp" />
     <ClCompile Include="src\keyboard_movement_controller.cpp" />
     <ClCompile Include="src\ld_allocator.cpp" />
     <ClCompile Include="src\ld_buffer.cpp" />
@@ -191,6 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\app.hpp" />
+    <ClInclude Include="src\image.hpp" />
     <ClInclude Include="src\keyboard_movement_controller.hpp" />
     <ClInclude Include="src\ld_allocator.hpp" />
     <ClInclude Include="src\ld_buffer.hpp" />

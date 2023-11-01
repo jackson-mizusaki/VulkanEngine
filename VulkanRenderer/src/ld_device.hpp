@@ -38,6 +38,7 @@ namespace Ld {
 		VkSurfaceKHR surface() { return m_surface; }
 		VkQueue graphicsQueue() { return m_graphicsQueue; }
 		VkQueue presentQueue() { return m_presentQueue; }
+		bool hasAllocator() { return m_allocator; }
 
 		SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(m_physicalDevice); }
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -46,17 +47,18 @@ namespace Ld {
 		VmaAllocator getAllocator() { return m_allocator;  }
 
 		// Buffer Helper Functions
-		void createBuffer(
-			VkDeviceSize size,
-			VkBufferUsageFlags usage,
-			VkBuffer& buffer,
-			VmaAllocation& allocation,
-			VmaAllocationCreateInfo& allocInfo);
+		//void createBuffer(
+		//	VkBufferCreateInfo& createInfo,
+		//	VkBuffer& buffer,
+		//	VmaAllocationCreateInfo& allocCreateInfo,
+		//	VmaAllocation& allocation,
+		//	VmaAllocationInfo& allocInfo
+		//);
 
 		void createImageWithInfo(const VkImageCreateInfo& imageInfo,
 			VkImage& image,
-			VmaAllocation& allocation,
-			VmaAllocationCreateInfo& allocInfo);
+			VmaAllocationCreateInfo& allocInfo,
+			VmaAllocation& allocation);
 		VkCommandBuffer beginSingleTimeCommands();
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);

@@ -34,7 +34,7 @@ namespace Ld {
 
 	void Model::bind(VkCommandBuffer commandBuffer)
 	{
-		VkBuffer buffers[] = { m_vertexBuffer->getBuffer()};
+		VkBuffer buffers[] = { m_vertexBuffer->getBuffer() };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 		if (m_hasIndexBuffer)
@@ -69,35 +69,43 @@ namespace Ld {
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
 		uint32_t vertexSize = sizeof(vertices[0]);
 
-		VmaAllocationCreateInfo stagingInfo{};
-		stagingInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		VmaAllocationCreateInfo stagingAllocInfo{};
+		stagingAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-		//stage to device memory
+		VkBufferCreateInfo stagingBufferCreateInfo{};
+		stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+		uint32_t alignmentSize = Ld::Buffer::getAlignment(vertexSize, 1);
 		Buffer stagingBuffer{
 			m_device,
+			stagingBufferCreateInfo,
 			vertexSize,
 			m_vertexCount,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-			stagingInfo
+			stagingAllocInfo,
+			alignmentSize
 		};
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)vertices.data());
 
-		VmaAllocationCreateInfo vertexInfo{};
-		vertexInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		VkBufferCreateInfo vertexBufferCreateInfo{};
+		vertexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		vertexBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+		VmaAllocationCreateInfo vertexAllocInfo{};
+		vertexAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
 		m_vertexBuffer = std::make_unique<Buffer>(
 			m_device,
+			vertexBufferCreateInfo,
 			vertexSize,
 			m_vertexCount,
-			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			vertexInfo
+			vertexAllocInfo,
+			alignmentSize
 		);
-
-
 		m_device.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
-
 	}
+
 	void Model::createIndexBuffers(const std::vector<uint32_t>& indices)
 	{
 		m_indexCount = static_cast<uint32_t>(indices.size());
@@ -111,29 +119,39 @@ namespace Ld {
 		VkDeviceSize bufferSize = sizeof(indices[0]) * m_indexCount;
 		uint32_t indexSize = sizeof(indices[0]);
 
-		VmaAllocationCreateInfo stagingInfo{};
-		stagingInfo.requiredFlags =	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-		Buffer stagingBuffer { 
-			m_device,  
-			indexSize, 
-			m_indexCount, 
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-			stagingInfo
+		VmaAllocationCreateInfo stagingAllocInfo{};
+		stagingAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+	
+		VkBufferCreateInfo stagingBufferCreateInfo{};
+		stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		
+		uint32_t alignmentSize = Ld::Buffer::getAlignment(indexSize, 1);
+		Buffer stagingBuffer{
+			m_device,
+			stagingBufferCreateInfo,
+			indexSize,
+			m_indexCount,
+			stagingAllocInfo,
+			alignmentSize
 		};
-		//stage to device memory
-
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)indices.data());
 
-		VmaAllocationCreateInfo indexInfo{};
-		indexInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		VkBufferCreateInfo indexBufferCreateInfo{};
+		indexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		indexBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+		VmaAllocationCreateInfo indexAllocInfo{};
+		indexAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
 		m_indexBuffer = std::make_unique<Buffer>(
-			m_device, 
+			m_device,
+			indexBufferCreateInfo,
 			indexSize,
-			m_indexCount, 
-			VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 
-			indexInfo
+			m_indexCount,
+			indexAllocInfo,
+			alignmentSize
 		);
 
 		m_device.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);

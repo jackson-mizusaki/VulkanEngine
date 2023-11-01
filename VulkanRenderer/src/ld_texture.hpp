@@ -1,5 +1,7 @@
 #pragma once
 #include "ld_device.hpp"
+
+#include "image.hpp"
 #include <vulkan/vulkan.h>
 
 #include <string>
@@ -7,6 +9,7 @@
 
 namespace Ld {
 	class Texture {
+		friend class Image;
 	public: // constructors
 		Texture(Device& device, const std::string& filepath);
 		~Texture();               // destructor 
@@ -18,9 +21,12 @@ namespace Ld {
 	public: // functions 
 		static std::unique_ptr<Texture> createTextureFromFile(Device& device, const std::string& filepath);
 		void createTextureImage(const std::string& filepath);
+	private:
+		void initializeImage();
 
 	private: // data
 		Device& m_device;
+		std::shared_ptr<Image> m_image = nullptr;
 		VkImage m_textureImage = nullptr;
 		VmaAllocation m_allocation;
 		VkImageView m_textureImageView = nullptr;

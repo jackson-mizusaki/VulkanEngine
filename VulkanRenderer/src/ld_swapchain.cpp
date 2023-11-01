@@ -355,8 +355,8 @@ namespace Ld
             m_device.createImageWithInfo(
                 imageInfo,
                 m_depthImages[i],
-                m_depthImageAllocations[i],
-                imageAllocInfo
+                imageAllocInfo,
+                m_depthImageAllocations[i]
             );
 
             VkImageViewCreateInfo viewInfo{};

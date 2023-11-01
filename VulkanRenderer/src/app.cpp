@@ -36,14 +36,22 @@ namespace Ld {
 		std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::s_maxFramesInFlight);
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
-			VmaAllocationCreateInfo uboInfo{};
-			uboInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+			uint32_t instanceCount = 1;
+			VmaAllocationCreateInfo uboAllocInfo{};
+			uboAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+
+			VkDeviceSize alignmentSize = Ld::Buffer::getAlignment(sizeof(GlobalUBO), instanceCount);
+			VkBufferCreateInfo bufferCreateInfo{};
+			bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+			bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 			uboBuffers[i] = std::make_unique<Buffer>(
 				m_device,
+				bufferCreateInfo,
 				sizeof(GlobalUBO),
-				1,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-				uboInfo
+				instanceCount,
+				uboAllocInfo,
+				alignmentSize
 			);
 			if (uboBuffers[i]->map() != VK_SUCCESS)
 			{

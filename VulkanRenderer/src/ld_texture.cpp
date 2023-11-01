@@ -11,7 +11,6 @@ namespace Ld {
 		: m_device{device}
 	{
 		createTextureImage(filepath);
-	
 	}
 
 	Texture::~Texture()

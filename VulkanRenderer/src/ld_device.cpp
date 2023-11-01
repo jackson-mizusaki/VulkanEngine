@@ -480,38 +480,6 @@ namespace Ld
 		throw std::runtime_error("failed to find suitable memory type!");
 	}
 
-	// rewrite when using a memory allocator
-	void Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkBuffer& buffer, VmaAllocation& allocation, VmaAllocationCreateInfo& allocInfo)
-	{
-		assert(m_allocator && "allocator not created yet");
-		VkBufferCreateInfo bufferInfo{};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = size;
-		bufferInfo.usage = usage;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		if (vmaCreateBuffer(m_allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create vertex buffer!");
-		}
-		//if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
-		//{
-		//     throw std::runtime_error("failed to create vertex buffer!");
-		//}
-
-		//VkMemoryAllocateInfo allocInfo{};
-		//allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		//allocInfo.allocationSize = memRequirements.size;
-		//allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-		//if (vkAllocateMemory(m_device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-		//{
-		//    throw std::runtime_error("failed to allocate vertex buffer memory!");
-		//}
-
-		//vkBindBufferMemory(m_device, buffer, bufferMemory, 0);
-	}
-
 	VkCommandBuffer Device::beginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
@@ -639,7 +607,17 @@ namespace Ld
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkImage& image, VmaAllocation& allocation, VmaAllocationCreateInfo& allocInfo)
+	//void Device::createBuffer(VkBufferCreateInfo &bufferInfo, VkBuffer& buffer, VmaAllocationCreateInfo& allocCreateInfo, VmaAllocation& allocation, VmaAllocationInfo& allocInfo)
+	//{
+	//	assert(m_allocator && "allocator not created yet");
+
+
+	//	if (vmaCreateBuffer(m_allocator, &bufferInfo, &allocCreateInfo, &buffer, &allocation, &allocInfo) != VK_SUCCESS)
+	//	{
+	//		throw std::runtime_error("failed to create vertex buffer!");
+	//	}
+	//}
+	void Device::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkImage& image, VmaAllocationCreateInfo& allocInfo, VmaAllocation& allocation)
 	{
 
 		assert(m_allocator && "allocator not created yet");
@@ -648,27 +626,5 @@ namespace Ld
 		{
 			throw std::runtime_error("failed to create image!");
 		}
-		//if (vkCreateImage(m_device, &imageInfo, nullptr, &image) != VK_SUCCESS)
-//{
-//    throw std::runtime_error("failed to create image!");
-//}
-	  /*  VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(m_device, image, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-		if (vkAllocateMemory(m_device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to allocate image memory!");
-		}
-
-		if (vkBindImageMemory(m_device, image, imageMemory, 0) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to bind image memory!");
-		}*/
 	}
-
 }  // namespace lve
