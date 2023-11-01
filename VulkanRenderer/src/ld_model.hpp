@@ -10,9 +10,8 @@
 #include <memory>
 #include <vector>
 
-namespace Ld
-{
-	class LdModel {
+namespace Ld {
+	class Model {
 	public: // types
 		struct Vertex {
 			bool operator==(const Vertex& other) const {
@@ -35,30 +34,30 @@ namespace Ld
 		};
 		
 	public: // constructors
-		LdModel(LdDevice& device, const LdModel::Builder &builder);
-		~LdModel();
+		Model(Device& device, const Model::Builder &builder);
+		~Model();
 
-		LdModel(const LdModel&) = delete;
-		LdModel& operator=(const LdModel&) = delete;
+		Model(const Model&) = delete;
+		Model& operator=(const Model&) = delete;
 
 	public: // functions
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 
-		static std::unique_ptr<LdModel> createModelFromFile(LdDevice& device, const std::string& filepath);
+		static std::unique_ptr<Model> createModelFromFile(Device& device, const std::string& filepath);
 	private:
 		void createVertexBuffers(const std::vector<Vertex>& vertices);
 		void createIndexBuffers(const std::vector<uint32_t>& indices);
 
 	public: // data
 	private:
-		LdDevice& m_device;
+		Device& m_device;
 
-		std::unique_ptr<LdBuffer> m_vertexBuffer;
+		std::unique_ptr<Buffer> m_vertexBuffer;
 		uint32_t m_vertexCount;
 
 		bool m_hasIndexBuffer = false;
-		std::unique_ptr<LdBuffer> m_indexBuffer;
+		std::unique_ptr<Buffer> m_indexBuffer;
 		uint32_t m_indexCount;
 	};
 }

@@ -10,12 +10,12 @@
 #include <vector>
 
 namespace Ld {
-	class LdRenderer {
+	class Renderer {
 	public: // constructors
-		LdRenderer(LdWindow& window, LdDevice& device);
-		~LdRenderer();
-		LdRenderer(const LdRenderer&) = delete;
-		LdRenderer& operator=(const LdRenderer&) = delete;
+		Renderer(Window& window, Device& device);
+		~Renderer();
+		Renderer(const Renderer&) = delete;
+		Renderer& operator=(const Renderer&) = delete;
 
 	public: // functions
 		VkRenderPass getSwapChainRenderPass() const { return m_swapChain->getRenderPass(); }
@@ -42,9 +42,9 @@ namespace Ld {
 
 	public: // data
 	private:
-		LdWindow& m_window;
-		LdDevice& m_device;
-		std::unique_ptr<LdSwapChain> m_swapChain;
+		Window& m_window;
+		Device& m_device;
+		std::unique_ptr<SwapChain> m_swapChain;
 		std::vector<VkCommandBuffer> m_commandBuffers;
 
 		uint32_t m_currentImageIndex;

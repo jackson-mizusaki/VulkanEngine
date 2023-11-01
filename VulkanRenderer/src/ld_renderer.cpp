@@ -7,18 +7,18 @@
 namespace Ld {
 
 
-	LdRenderer::LdRenderer(LdWindow &window, LdDevice & device) : m_window{window}, m_device{device}
+	Renderer::Renderer(Window &window, Device & device) : m_window{window}, m_device{device}
 	{
 		recreateSwapChain();
 		createCommandBuffers();
 	}
 
-	LdRenderer::~LdRenderer()
+	Renderer::~Renderer()
 	{
 		freeCommandBuffers();
 	}
 
-	VkCommandBuffer LdRenderer::beginFrame()
+	VkCommandBuffer Renderer::beginFrame()
 	{
 		assert(!m_isFrameStarted && "can't call beginFrame while already in progress");		
 		auto result = m_swapChain->acquireNextImage(&m_currentImageIndex);
@@ -48,7 +48,7 @@ namespace Ld {
 		return commandBuffer;
 	}
 
-	void LdRenderer::endFrame()
+	void Renderer::endFrame()
 	{
 		assert(m_isFrameStarted && "can't call endframe while frame is not in progress");
 		auto commandBuffer = getCurrentCommandBuffer();
@@ -69,10 +69,10 @@ namespace Ld {
 		}
 
 		m_isFrameStarted = false;
-		m_currentFrameIndex = (m_currentFrameIndex + 1) % LdSwapChain::s_maxFramesInFlight;
+		m_currentFrameIndex = (m_currentFrameIndex + 1) % SwapChain::s_maxFramesInFlight;
 	}
 
-	void LdRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
+	void Renderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
 	{
 		assert(m_isFrameStarted && "Can't call beginSwapChainREnderPass if frame is not in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() &&
@@ -106,7 +106,7 @@ namespace Ld {
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
-	void LdRenderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
+	void Renderer::endSwapChainRenderPass(VkCommandBuffer commandBuffer)
 	{
 		assert(m_isFrameStarted && "Can't call beginSwapChainREnderPass if frame is not in progress");
 		assert(commandBuffer == getCurrentCommandBuffer() &&
@@ -115,9 +115,9 @@ namespace Ld {
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void LdRenderer::createCommandBuffers()
+	void Renderer::createCommandBuffers()
 	{
-		m_commandBuffers.resize(LdSwapChain::s_maxFramesInFlight);
+		m_commandBuffers.resize(SwapChain::s_maxFramesInFlight);
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -130,13 +130,13 @@ namespace Ld {
 		}
 	}
 
-	void LdRenderer::freeCommandBuffers()
+	void Renderer::freeCommandBuffers()
 	{
 		vkFreeCommandBuffers(m_device.device(), m_device.getCommandPool(), static_cast<uint32_t>(m_commandBuffers.size()), m_commandBuffers.data());
 		m_commandBuffers.clear();
 	}
 
-	void LdRenderer::recreateSwapChain()
+	void Renderer::recreateSwapChain()
 	{
 		auto extent = m_window.getExtent();
 		while (extent.width == 0 || extent.height == 0)
@@ -148,12 +148,12 @@ namespace Ld {
 
 		if (m_swapChain == nullptr)
 		{
-			m_swapChain = std::make_unique<LdSwapChain>(m_device, extent);
+			m_swapChain = std::make_unique<SwapChain>(m_device, extent);
 		}
 		else
 		{
-			std::shared_ptr<LdSwapChain> oldSwapChain = std::move(m_swapChain);
-			m_swapChain = std::make_unique<LdSwapChain>(m_device, extent, oldSwapChain);
+			std::shared_ptr<SwapChain> oldSwapChain = std::move(m_swapChain);
+			m_swapChain = std::make_unique<SwapChain>(m_device, extent, oldSwapChain);
 
 			if (!oldSwapChain->compareSwapFormats(*m_swapChain.get())) 
 			{

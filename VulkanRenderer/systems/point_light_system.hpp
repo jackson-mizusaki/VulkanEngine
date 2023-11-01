@@ -12,7 +12,7 @@
 namespace Ld {
 	class PointLightSystem {
 	public: // constructors
-		PointLightSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+		PointLightSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~PointLightSystem();
 		PointLightSystem(const PointLightSystem&) = delete;
 		PointLightSystem& operator=(const PointLightSystem&) = delete;
@@ -26,8 +26,8 @@ namespace Ld {
 
 	public: // data
 	private:
-		LdDevice& m_device;
-		std::unique_ptr<LdPipeline> m_pipeline;
+		Device& m_device;
+		std::unique_ptr<Pipeline> m_pipeline;
 		VkPipelineLayout m_pipelineLayout;
 
 	};

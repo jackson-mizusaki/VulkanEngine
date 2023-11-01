@@ -26,11 +26,11 @@ namespace Ld {
 		static constexpr int WIDTH = 800;
 		static constexpr int HEIGHT = 600;
 	private:
-		LdWindow m_window{ WIDTH, HEIGHT, "App Window" };
-		LdDevice m_device{ m_window };
-		LdRenderer m_renderer{ m_window, m_device };
+		Window m_window{ WIDTH, HEIGHT, "App Window" };
+		Device m_device{ m_window };
+		Renderer m_renderer{ m_window, m_device };
 
-		std::unique_ptr<LdDescriptorPool> m_globalPool{};
-		LdGameObject::Map m_gameObjects;
+		std::unique_ptr<DescriptorPool> m_globalPool{};
+		GameObject::Map m_gameObjects;
 	};
 }

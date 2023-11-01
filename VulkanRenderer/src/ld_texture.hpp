@@ -6,21 +6,21 @@
 #include <memory>
 
 namespace Ld {
-	class LdTexture {
+	class Texture {
 	public: // constructors
-		LdTexture(LdDevice& device, const std::string& filepath);
-		~LdTexture();               // destructor 
-		LdTexture(const LdTexture&) = default;                // copy constructor
-		LdTexture& operator=(const LdTexture&) = default;     // copy assignment
-		LdTexture(LdTexture&&) noexcept = default;            // move constructor
-		LdTexture& operator=(LdTexture&&) noexcept = default; // move assignment
+		Texture(Device& device, const std::string& filepath);
+		~Texture();               // destructor 
+		Texture(const Texture&) = default;                // copy constructor
+		Texture& operator=(const Texture&) = default;     // copy assignment
+		Texture(Texture&&) noexcept = default;            // move constructor
+		Texture& operator=(Texture&&) noexcept = default; // move assignment
 
 	public: // functions 
-		static std::unique_ptr<LdTexture> createTextureFromFile(LdDevice& device, const std::string& filepath);
+		static std::unique_ptr<Texture> createTextureFromFile(Device& device, const std::string& filepath);
 		void createTextureImage(const std::string& filepath);
 
 	private: // data
-		LdDevice& m_device;
+		Device& m_device;
 		VkImage m_textureImage = nullptr;
 		VkDeviceMemory m_textureImageMemory = nullptr;
 		VkImageView m_textureImageView = nullptr;

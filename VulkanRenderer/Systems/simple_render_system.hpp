@@ -12,7 +12,7 @@
 namespace Ld {
 	class SimpleRenderSystem {
 	public: // constructors
-		SimpleRenderSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+		SimpleRenderSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
 		~SimpleRenderSystem();
 		SimpleRenderSystem(const SimpleRenderSystem&) = delete;
 		SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
@@ -25,8 +25,8 @@ namespace Ld {
 
 	public: // data
 	private:
-		LdDevice &m_device;
-		std::unique_ptr<LdPipeline> m_pipeline;
+		Device &m_device;
+		std::unique_ptr<Pipeline> m_pipeline;
 		VkPipelineLayout m_pipelineLayout;
 	};
 }

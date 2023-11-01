@@ -8,7 +8,7 @@ namespace Ld {
 
 	// *************** Descriptor Set Layout Builder *********************
 
-	LdDescriptorSetLayout::Builder& LdDescriptorSetLayout::Builder::addBinding(
+	DescriptorSetLayout::Builder& DescriptorSetLayout::Builder::addBinding(
 		uint32_t binding,
 		VkDescriptorType descriptorType,
 		VkShaderStageFlags stageFlags,
@@ -24,14 +24,14 @@ namespace Ld {
 		return *this;
 	}
 
-	std::unique_ptr<LdDescriptorSetLayout> LdDescriptorSetLayout::Builder::build() const
+	std::unique_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const
 	{
-		return std::make_unique<LdDescriptorSetLayout>(ldDevice, bindings);
+		return std::make_unique<DescriptorSetLayout>(ldDevice, bindings);
 	}
 
 	// *************** Descriptor Set Layout *********************
 
-	LdDescriptorSetLayout::LdDescriptorSetLayout(LdDevice& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
+	DescriptorSetLayout::DescriptorSetLayout(Device& device, std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings)
 		: m_device{ device }, m_bindings{ bindings }, m_descriptorSetLayout{}
 	{
 		std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings{};
@@ -51,38 +51,38 @@ namespace Ld {
 		}
 	}
 
-	LdDescriptorSetLayout::~LdDescriptorSetLayout()
+	DescriptorSetLayout::~DescriptorSetLayout()
 	{
 		vkDestroyDescriptorSetLayout(m_device.device(), m_descriptorSetLayout, nullptr);
 	}
 
 	// *************** Descriptor Pool Builder *********************
 
-	LdDescriptorPool::Builder& LdDescriptorPool::Builder::addPoolSize(VkDescriptorType descriptorType, uint32_t count)
+	DescriptorPool::Builder& DescriptorPool::Builder::addPoolSize(VkDescriptorType descriptorType, uint32_t count)
 	{
 		poolSizes.push_back({ descriptorType, count });
 		return *this;
 	}
 
-	LdDescriptorPool::Builder& LdDescriptorPool::Builder::setPoolFlags(VkDescriptorPoolCreateFlags flags)
+	DescriptorPool::Builder& DescriptorPool::Builder::setPoolFlags(VkDescriptorPoolCreateFlags flags)
 	{
 		poolFlags = flags;
 		return *this;
 	}
-	LdDescriptorPool::Builder& LdDescriptorPool::Builder::setMaxSets(uint32_t count)
+	DescriptorPool::Builder& DescriptorPool::Builder::setMaxSets(uint32_t count)
 	{
 		maxSets = count;
 		return *this;
 	}
 
-	std::unique_ptr<LdDescriptorPool> LdDescriptorPool::Builder::build() const
+	std::unique_ptr<DescriptorPool> DescriptorPool::Builder::build() const
 	{
-		return std::make_unique<LdDescriptorPool>(ldDevice, maxSets, poolFlags, poolSizes);
+		return std::make_unique<DescriptorPool>(ldDevice, maxSets, poolFlags, poolSizes);
 	}
 
 	// *************** Descriptor Pool *********************
 
-	LdDescriptorPool::LdDescriptorPool(LdDevice& device,
+	DescriptorPool::DescriptorPool(Device& device,
 		uint32_t maxSets,
 		VkDescriptorPoolCreateFlags poolFlags,
 		const std::vector<VkDescriptorPoolSize>& poolSizes)
@@ -101,12 +101,12 @@ namespace Ld {
 		}
 	}
 
-	LdDescriptorPool::~LdDescriptorPool()
+	DescriptorPool::~DescriptorPool()
 	{
 		vkDestroyDescriptorPool(m_device.device(), m_descriptorPool, nullptr);
 	}
 
-	bool LdDescriptorPool::allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const
+	bool DescriptorPool::allocateDescriptorSet(const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet& descriptor) const
 	{
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -123,24 +123,24 @@ namespace Ld {
 		return true;
 	}
 
-	void LdDescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const
+	void DescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const
 	{
 		vkFreeDescriptorSets(m_device.device(), m_descriptorPool, static_cast<uint32_t>(descriptors.size()), descriptors.data());
 	}
 
-	void LdDescriptorPool::resetPool()
+	void DescriptorPool::resetPool()
 	{
 		vkResetDescriptorPool(m_device.device(), m_descriptorPool, 0);
 	}
 
 	// *************** Descriptor Writer *********************
 
-	LdDescriptorWriter::LdDescriptorWriter(LdDescriptorSetLayout& setLayout, LdDescriptorPool& pool)
+	DescriptorWriter::DescriptorWriter(DescriptorSetLayout& setLayout, DescriptorPool& pool)
 		: m_setLayout{ setLayout }, m_pool{ pool }
 	{
 	}
 
-	LdDescriptorWriter& LdDescriptorWriter::writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo)
+	DescriptorWriter& DescriptorWriter::writeBuffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo)
 	{
 		assert(m_setLayout.m_bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
@@ -159,7 +159,7 @@ namespace Ld {
 		return *this;
 	}
 
-	LdDescriptorWriter& LdDescriptorWriter::writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo)
+	DescriptorWriter& DescriptorWriter::writeImage(uint32_t binding, VkDescriptorImageInfo* imageInfo)
 	{
 		assert(m_setLayout.m_bindings.count(binding) == 1 && "Layout does not contain specified binding");
 
@@ -178,7 +178,7 @@ namespace Ld {
 		return *this;
 	}
 
-	bool LdDescriptorWriter::build(VkDescriptorSet& set)
+	bool DescriptorWriter::build(VkDescriptorSet& set)
 	{
 		bool success = m_pool.allocateDescriptorSet(m_setLayout.getDescriptorSetLayout(), set);
 		if (!success)
@@ -189,7 +189,7 @@ namespace Ld {
 		return true;
 	}
 
-	void LdDescriptorWriter::overwrite(VkDescriptorSet& set)
+	void DescriptorWriter::overwrite(VkDescriptorSet& set)
 	{
 		for (auto& write : m_writes)
 		{

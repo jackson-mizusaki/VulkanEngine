@@ -26,12 +26,12 @@ namespace Ld {
 		uint32_t subpass = 0;
 	};
 
-	class LdPipeline {
+	class Pipeline {
 	public: // constructors
-		LdPipeline(LdDevice& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo);
-		~LdPipeline();
-		LdPipeline(const LdPipeline&) = delete;
-		LdPipeline &operator=(const LdPipeline&) = delete;
+		Pipeline(Device& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo);
+		~Pipeline();
+		Pipeline(const Pipeline&) = delete;
+		Pipeline &operator=(const Pipeline&) = delete;
 
 	public: // functions
 		void bind(VkCommandBuffer commandBuffer);
@@ -44,7 +44,7 @@ namespace Ld {
 
 	public: // data
 	private:
-		LdDevice& m_device; // if device is released before pipeline, it could crash, but it will outlive the pipeline
+		Device& m_device; // if device is released before pipeline, it could crash, but it will outlive the pipeline
 		VkPipeline m_graphicsPipeline;
 		VkShaderModule m_vertShaderModule;
 		VkShaderModule m_fragShaderModule;

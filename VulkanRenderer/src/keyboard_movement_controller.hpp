@@ -28,7 +28,7 @@ namespace Ld {
 		float lookSpeed{ 1.5f };
 
 	public:
-		void moveInPlaneXZ(GLFWwindow* window, float dt, LdGameObject &gameObject);
+		void moveInPlaneXZ(GLFWwindow* window, float dt, GameObject &gameObject);
 
 	};
 

@@ -12,7 +12,7 @@
 #include <cstring>
 
 namespace Ld {
-	LdBuffer::LdBuffer(LdDevice& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
+	Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
 		: m_ldDevice{ device }, m_instanceSize{ instanceSize }, m_instanceCount{ instanceCount }, m_usageFlags{ usageFlags }, m_memoryPropertyFlags{ memoryPropertyFlags }
 	{
 		m_alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
@@ -20,7 +20,7 @@ namespace Ld {
 		device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_memory);
 	}
 
-	LdBuffer::~LdBuffer()
+	Buffer::~Buffer()
 	{
 		unmap();
 		vkDestroyBuffer(m_ldDevice.device(), m_buffer, nullptr);
@@ -36,7 +36,7 @@ namespace Ld {
 	 *
 	 * @return VkResult of the buffer mapping call
 	 */
-	VkDeviceSize LdBuffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
+	VkDeviceSize Buffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) {
 		if (minOffsetAlignment > 0) {
 			return (instanceSize + minOffsetAlignment - 1) & ~(minOffsetAlignment - 1);
 		}
@@ -52,7 +52,7 @@ namespace Ld {
 	 *
 	 * @return VkResult of the buffer mapping call
 	 */
-	VkResult LdBuffer::map(VkDeviceSize size, VkDeviceSize offset)
+	VkResult Buffer::map(VkDeviceSize size, VkDeviceSize offset)
 	{
 		assert(m_buffer && m_memory && "Called map on buffer before create");
 		return vkMapMemory(m_ldDevice.device(), m_memory, offset, size, 0, &m_mapped);
@@ -63,7 +63,7 @@ namespace Ld {
 	 *
 	 * @note Does not return a result as vkUnmapMemory can't fail
 	 */
-	void LdBuffer::unmap()
+	void Buffer::unmap()
 	{
 		if (m_mapped)
 		{
@@ -81,7 +81,7 @@ namespace Ld {
 	 * @param offset (Optional) Byte offset from beginning of mapped region
 	 *
 	 */
-	void LdBuffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset)
+	void Buffer::writeToBuffer(void* data, VkDeviceSize size, VkDeviceSize offset)
 	{
 		assert(m_mapped && "Cannot copy to unmapped buffer");
 
@@ -108,7 +108,7 @@ namespace Ld {
 	 *
 	 * @return VkResult of the flush call
 	 */
-	VkResult LdBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
+	VkResult Buffer::flush(VkDeviceSize size, VkDeviceSize offset)
 	{
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -129,7 +129,7 @@ namespace Ld {
 	 *
 	 * @return VkResult of the invalidate call
 	 */
-	VkResult LdBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
+	VkResult Buffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
 	{
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -147,7 +147,7 @@ namespace Ld {
 	 *
 	 * @return VkDescriptorBufferInfo of specified offset and range
 	 */
-	VkDescriptorBufferInfo LdBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
+	VkDescriptorBufferInfo Buffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset)
 	{
 		return VkDescriptorBufferInfo{
 			m_buffer,
@@ -163,7 +163,7 @@ namespace Ld {
 	 * @param index Used in offset calculation
 	 *
 	 */
-	void LdBuffer::writeToIndex(void* data, int index)
+	void Buffer::writeToIndex(void* data, int index)
 	{
 		writeToBuffer(data, m_instanceSize, index * m_alignmentSize);
 	}
@@ -174,7 +174,7 @@ namespace Ld {
 	 * @param index Used in offset calculation
 	 *
 	 */
-	VkResult LdBuffer::flushIndex(int index)
+	VkResult Buffer::flushIndex(int index)
 	{
 		return flush(m_alignmentSize, index * m_alignmentSize);
 	}
@@ -186,7 +186,7 @@ namespace Ld {
 	 *
 	 * @return VkDescriptorBufferInfo for instance at index
 	 */
-	VkDescriptorBufferInfo LdBuffer::descriptorInfoForIndex(int index)
+	VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index)
 	{
 		return descriptorInfo(m_alignmentSize, index * m_alignmentSize);
 	}
@@ -200,7 +200,7 @@ namespace Ld {
 	 *
 	 * @return VkResult of the invalidate call
 	 */
-	VkResult LdBuffer::invalidateIndex(int index)
+	VkResult Buffer::invalidateIndex(int index)
 	{
 		return invalidate(m_alignmentSize, index * m_alignmentSize);
 	}

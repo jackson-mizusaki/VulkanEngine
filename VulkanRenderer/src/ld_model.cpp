@@ -12,8 +12,8 @@
 
 namespace std {
 	template<>
-	struct hash<Ld::LdModel::Vertex> {
-		size_t operator()(Ld::LdModel::Vertex const& vertex) const {
+	struct hash<Ld::Model::Vertex> {
+		size_t operator()(Ld::Model::Vertex const& vertex) const {
 			size_t seed = 0;
 			Ld::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
 			return seed;
@@ -22,17 +22,17 @@ namespace std {
 }
 
 namespace Ld {
-	LdModel::LdModel(LdDevice& device, const LdModel::Builder& builder) : m_device{ device }
+	Model::Model(Device& device, const Model::Builder& builder) : m_device{ device }
 	{
 		createVertexBuffers(builder.vertices);
 		createIndexBuffers(builder.indices);
 	}
 
-	LdModel::~LdModel()
+	Model::~Model()
 	{
 	}
 
-	void LdModel::bind(VkCommandBuffer commandBuffer)
+	void Model::bind(VkCommandBuffer commandBuffer)
 	{
 		VkBuffer buffers[] = { m_vertexBuffer->getBuffer()};
 		VkDeviceSize offsets[] = { 0 };
@@ -44,7 +44,7 @@ namespace Ld {
 		}
 	}
 
-	void LdModel::draw(VkCommandBuffer commandBuffer)
+	void Model::draw(VkCommandBuffer commandBuffer)
 	{
 		if (m_hasIndexBuffer)
 		{
@@ -55,14 +55,14 @@ namespace Ld {
 		}
 	}
 
-	std::unique_ptr<LdModel> LdModel::createModelFromFile(LdDevice& device, const std::string& filepath)
+	std::unique_ptr<Model> Model::createModelFromFile(Device& device, const std::string& filepath)
 	{
 		Builder builder{};
 		builder.loadModel(filepath);
-		return std::make_unique<LdModel>(device, builder);
+		return std::make_unique<Model>(device, builder);
 	}
 
-	void LdModel::createVertexBuffers(const std::vector<Vertex>& vertices)
+	void Model::createVertexBuffers(const std::vector<Vertex>& vertices)
 	{
 		m_vertexCount = static_cast<uint32_t>(vertices.size());
 		assert(m_vertexCount >= 3 && "Vertex count must be at least 3");
@@ -70,7 +70,7 @@ namespace Ld {
 		uint32_t vertexSize = sizeof(vertices[0]);
 
 		//stage to device memory
-		LdBuffer stagingBuffer{
+		Buffer stagingBuffer{
 			m_device,
 			vertexSize,
 			m_vertexCount,
@@ -80,13 +80,13 @@ namespace Ld {
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)vertices.data());
 
-		m_vertexBuffer = std::make_unique<LdBuffer>(m_device, vertexSize, m_vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_vertexBuffer = std::make_unique<Buffer>(m_device, vertexSize, m_vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 
 		m_device.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
 
 	}
-	void LdModel::createIndexBuffers(const std::vector<uint32_t>& indices)
+	void Model::createIndexBuffers(const std::vector<uint32_t>& indices)
 	{
 		m_indexCount = static_cast<uint32_t>(indices.size());
 		m_hasIndexBuffer = m_indexCount > 0;
@@ -98,18 +98,18 @@ namespace Ld {
 
 		VkDeviceSize bufferSize = sizeof(indices[0]) * m_indexCount;
 		uint32_t indexSize = sizeof(indices[0]);
-		LdBuffer stagingBuffer{ m_device, indexSize, m_indexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+		Buffer stagingBuffer{ m_device, indexSize, m_indexCount, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
 		//stage to device memory
 
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)indices.data());
 
-		m_indexBuffer = std::make_unique<LdBuffer>(m_device, indexSize, m_indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		m_indexBuffer = std::make_unique<Buffer>(m_device, indexSize, m_indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		m_device.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);
 	}
 
-	std::vector<VkVertexInputBindingDescription> LdModel::Vertex::getBindingDescriptions()
+	std::vector<VkVertexInputBindingDescription> Model::Vertex::getBindingDescriptions()
 	{
 		std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
 		bindingDescriptions[0].binding = 0;
@@ -118,7 +118,7 @@ namespace Ld {
 		return bindingDescriptions;
 	}
 
-	std::vector<VkVertexInputAttributeDescription> LdModel::Vertex::getAttributeDescriptions()
+	std::vector<VkVertexInputAttributeDescription> Model::Vertex::getAttributeDescriptions()
 	{
 		std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
 
@@ -140,7 +140,7 @@ namespace Ld {
 	}
 
 
-	void LdModel::Builder::loadModel(const std::string& filepath)
+	void Model::Builder::loadModel(const std::string& filepath)
 	{
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;

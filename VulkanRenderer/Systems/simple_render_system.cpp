@@ -15,7 +15,7 @@ namespace Ld {
 		glm::mat4 normalMatrix{ 1.f };
 	};
 
-	SimpleRenderSystem::SimpleRenderSystem(LdDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+	SimpleRenderSystem::SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
 		: m_device{device}
 	{
 		createPipelineLayout(globalSetLayout);
@@ -55,10 +55,10 @@ namespace Ld {
 		assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 		PipelineConfigInfo pipelineConfig{};
-		LdPipeline::defaultPipelineConfigInfo(pipelineConfig);
+		Pipeline::defaultPipelineConfigInfo(pipelineConfig);
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = m_pipelineLayout;
-		m_pipeline = std::make_unique<LdPipeline>(
+		m_pipeline = std::make_unique<Pipeline>(
 			m_device,
 			"shaders/simple_shader.vert.spv",
 			"shaders/simple_shader.frag.spv",

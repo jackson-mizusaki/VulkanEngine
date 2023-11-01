@@ -5,12 +5,12 @@
 #include <string>
 
 namespace Ld {
-	class LdWindow {
+	class Window {
 	public: // constructors
-		LdWindow(int w, int h, std::string name);
-		~LdWindow();
-		LdWindow(const LdWindow&) = delete;
-		LdWindow& operator=(const LdWindow&) = delete;
+		Window(int w, int h, std::string name);
+		~Window();
+		Window(const Window&) = delete;
+		Window& operator=(const Window&) = delete;
 
 	public: // functions
 		bool shouldClose() { return glfwWindowShouldClose(m_window); }

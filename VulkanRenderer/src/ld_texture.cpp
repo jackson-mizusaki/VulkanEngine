@@ -7,24 +7,24 @@
 #include <stdexcept>
 
 namespace Ld {
-	LdTexture::LdTexture(LdDevice& device, const std::string& filepath)
+	Texture::Texture(Device& device, const std::string& filepath)
 		: m_device{device}
 	{
 		createTextureImage(filepath);
 	
 	}
 
-	LdTexture::~LdTexture()
+	Texture::~Texture()
 	{
 		vkDestroySampler(m_device.device(), m_textureSampler, nullptr);
 	}
 
-	std::unique_ptr<LdTexture> LdTexture::createTextureFromFile(LdDevice& device, const std::string& filepath)
+	std::unique_ptr<Texture> Texture::createTextureFromFile(Device& device, const std::string& filepath)
 	{
-		return std::make_unique<LdTexture>(device, filepath);
+		return std::make_unique<Texture>(device, filepath);
 	}
 
-	void LdTexture::createTextureImage(const std::string& filepath)
+	void Texture::createTextureImage(const std::string& filepath)
 	{
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -34,7 +34,7 @@ namespace Ld {
 			throw std::runtime_error("failed to load texture image!");
 		}
 
-		LdBuffer stagingBuffer{
+		Buffer stagingBuffer{
 			m_device,
 			imageSize,
 			1,

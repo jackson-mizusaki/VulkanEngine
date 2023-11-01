@@ -4,19 +4,19 @@
 
 namespace Ld {
 
-	class LdBuffer {
+	class Buffer {
 	public: // constructors
-		LdBuffer(
-			LdDevice& device,
+		Buffer(
+			Device& device,
 			VkDeviceSize instanceSize,
 			uint32_t instanceCount,
 			VkBufferUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryPropertyFlags,
 			VkDeviceSize minOffsetAlignment = 1);
-		~LdBuffer();
+		~Buffer();
 
-		LdBuffer(const LdBuffer&) = delete;
-		LdBuffer& operator=(const LdBuffer&) = delete;
+		Buffer(const Buffer&) = delete;
+		Buffer& operator=(const Buffer&) = delete;
 
 	public: // functions
 		VkBuffer getBuffer() const { return m_buffer; }
@@ -44,7 +44,7 @@ namespace Ld {
 
 	public: // data
 	private:
-		LdDevice& m_ldDevice;
+		Device& m_ldDevice;
 		void* m_mapped = nullptr;
 		VkBuffer m_buffer = VK_NULL_HANDLE;
 		VkDeviceMemory m_memory = VK_NULL_HANDLE;

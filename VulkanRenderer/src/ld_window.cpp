@@ -4,18 +4,18 @@
 
 namespace Ld
 {
-	LdWindow::LdWindow(int w, int h, std::string name) : m_width{ w }, m_height{ h }, m_windowName{ name }
+	Window::Window(int w, int h, std::string name) : m_width{ w }, m_height{ h }, m_windowName{ name }
 	{
 		initWindow();
 	}
 
-	LdWindow::~LdWindow()
+	Window::~Window()
 	{
 		glfwDestroyWindow(m_window);
 		glfwTerminate();
 	}
 
-	void LdWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
+	void Window::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
 	{
 		if (glfwCreateWindowSurface(instance, m_window, nullptr, surface) != VK_SUCCESS)
 		{
@@ -23,15 +23,15 @@ namespace Ld
 		}
 	}
 
-	void LdWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+	void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
-		auto ldWindow = reinterpret_cast<LdWindow*>(glfwGetWindowUserPointer(window));
+		auto ldWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
 		ldWindow->m_isFramebufferResized = true;
 		ldWindow->m_width = width;
 		ldWindow->m_height = height;
 	}
 
-	void LdWindow::initWindow()
+	void Window::initWindow()
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

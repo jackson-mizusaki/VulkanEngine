@@ -28,8 +28,8 @@ namespace Ld {
 		int frameIndex;
 		float frameTime;
 		VkCommandBuffer commandBuffer;
-		LdCamera& camera;
+		Camera& camera;
 		VkDescriptorSet globalDescriptorSet;
-		LdGameObject::Map& gameObjects;
+		GameObject::Map& gameObjects;
 	};	
 }

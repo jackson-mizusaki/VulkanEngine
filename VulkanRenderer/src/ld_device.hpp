@@ -21,15 +21,15 @@ namespace Ld {
 		bool isComplete() { return graphicsFamilyHasValue && presentFamilyHasValue; }
 	};
 
-	class LdDevice {
+	class Device {
 	public: // constructors
-		LdDevice(LdWindow& window);
-		~LdDevice();
+		Device(Window& window);
+		~Device();
 		// Not copyable or movable
-		LdDevice(const LdDevice&) = delete;
-		LdDevice& operator=(const LdDevice&) = delete;
-		LdDevice(LdDevice&&) = delete;
-		LdDevice& operator=(LdDevice&&) = delete;
+		Device(const Device&) = delete;
+		Device& operator=(const Device&) = delete;
+		Device(Device&&) = delete;
+		Device& operator=(Device&&) = delete;
 
 	public: // functions
 		VkCommandPool getCommandPool() { return m_commandPool; }
@@ -89,7 +89,7 @@ namespace Ld {
 		VkInstance m_instance;
 		VkDebugUtilsMessengerEXT m_debugMessenger;
 		VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-		LdWindow& m_window;
+		Window& m_window;
 		VkCommandPool m_commandPool;
 
 		VkDevice m_device;

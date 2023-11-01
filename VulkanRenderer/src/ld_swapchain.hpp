@@ -11,13 +11,13 @@
 #include <vector>
 
 namespace Ld {
-    class LdSwapChain {
+    class SwapChain {
     public: // constructors
-        LdSwapChain(LdDevice& deviceRef, VkExtent2D windowExtent);
-        LdSwapChain(LdDevice& deviceRef, VkExtent2D windowExtent, std::shared_ptr<LdSwapChain> previous);
-        ~LdSwapChain();
-        LdSwapChain(const LdSwapChain&) = delete;
-        LdSwapChain &operator=(const LdSwapChain&) = delete;
+        SwapChain(Device& deviceRef, VkExtent2D windowExtent);
+        SwapChain(Device& deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous);
+        ~SwapChain();
+        SwapChain(const SwapChain&) = delete;
+        SwapChain &operator=(const SwapChain&) = delete;
 
     public: // functions
         VkFramebuffer getFrameBuffer(int index) { return m_swapChainFramebuffers[index]; }
@@ -37,7 +37,7 @@ namespace Ld {
         VkResult acquireNextImage(uint32_t* imageIndex);
         VkResult submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
-        bool compareSwapFormats(const LdSwapChain& swapChain) const {
+        bool compareSwapFormats(const SwapChain& swapChain) const {
             return swapChain.m_swapChainDepthFormat == m_swapChainDepthFormat &&
                 swapChain.m_swapChainImageFormat == m_swapChainImageFormat;
         }
@@ -72,11 +72,11 @@ namespace Ld {
         std::vector<VkImage> m_swapChainImages;
         std::vector<VkImageView> m_swapChainImageViews;
 
-        LdDevice& m_device;
+        Device& m_device;
         VkExtent2D m_windowExtent;
 
         VkSwapchainKHR m_swapChain;
-        std::shared_ptr<LdSwapChain> m_oldSwapChain;
+        std::shared_ptr<SwapChain> m_oldSwapChain;
 
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;

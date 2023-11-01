@@ -7,25 +7,25 @@
 
 namespace Ld {
 
-	LdPipeline::LdPipeline(LdDevice& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo) :
+	Pipeline::Pipeline(Device& device, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo) :
 		m_device{ device }
 	{
 		createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
 	}
 
-	LdPipeline::~LdPipeline()
+	Pipeline::~Pipeline()
 	{
 		vkDestroyShaderModule(m_device.device(), m_vertShaderModule, nullptr);
 		vkDestroyShaderModule(m_device.device(), m_fragShaderModule, nullptr);
 		vkDestroyPipeline(m_device.device(), m_graphicsPipeline, nullptr);
 	}
 
-	void LdPipeline::bind(VkCommandBuffer commandBuffer)
+	void Pipeline::bind(VkCommandBuffer commandBuffer)
 	{
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 	}
 
-	void LdPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
+	void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
 	{
 		configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -95,11 +95,11 @@ namespace Ld {
 		configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
 		configInfo.dynamicStateInfo.flags = 0;
 
-		configInfo.bindingDescriptions = LdModel::Vertex::getBindingDescriptions();
-		configInfo.attributeDescriptions = LdModel::Vertex::getAttributeDescriptions();
+		configInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
+		configInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
 	}
 
-	void LdPipeline::enableAlphaBlending(PipelineConfigInfo& configInfo)
+	void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo)
 	{
 		configInfo.colorBlendAttachment.blendEnable = VK_TRUE;
 		configInfo.colorBlendAttachment.colorWriteMask =
@@ -113,7 +113,7 @@ namespace Ld {
 		configInfo.colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;              
 	}
 
-	std::vector<char> LdPipeline::readFile(const std::string& filepath)
+	std::vector<char> Pipeline::readFile(const std::string& filepath)
 	{
 		std::ifstream file{ filepath, std::ios::ate | std::ios::binary };
 
@@ -132,7 +132,7 @@ namespace Ld {
 		return buffer;
 	}
 
-	void LdPipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo)
+	void Pipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo)
 	{
 		assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline: no pipelineLayout provided in configInfo");
 		assert(configInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in configInfo");
@@ -195,7 +195,7 @@ namespace Ld {
 
 
 	}
-	void LdPipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
+	void Pipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
 	{
 		VkShaderModuleCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

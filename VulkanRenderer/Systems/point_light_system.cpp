@@ -17,7 +17,7 @@ namespace Ld {
 		float radius;
 	};
 
-	PointLightSystem::PointLightSystem(LdDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+	PointLightSystem::PointLightSystem(Device& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
 		: m_device{ device }
 	{
 		createPipelineLayout(globalSetLayout);
@@ -57,13 +57,13 @@ namespace Ld {
 		assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
 		PipelineConfigInfo pipelineConfig{};
-		LdPipeline::defaultPipelineConfigInfo(pipelineConfig);
-		LdPipeline::enableAlphaBlending(pipelineConfig);
+		Pipeline::defaultPipelineConfigInfo(pipelineConfig);
+		Pipeline::enableAlphaBlending(pipelineConfig);
 		pipelineConfig.attributeDescriptions.clear();
 		pipelineConfig.bindingDescriptions.clear();
 		pipelineConfig.renderPass = renderPass;
 		pipelineConfig.pipelineLayout = m_pipelineLayout;
-		m_pipeline = std::make_unique<LdPipeline>(
+		m_pipeline = std::make_unique<Pipeline>(
 			m_device,
 			"shaders/point_light.vert.spv",
 			"shaders/point_light.frag.spv",
@@ -73,7 +73,7 @@ namespace Ld {
 
 	void PointLightSystem::render(FrameInfo& frameInfo)
 	{
-		std::map<float, LdGameObject::id_t> sorted;
+		std::map<float, GameObject::id_t> sorted;
 
 		for (auto& kv : frameInfo.gameObjects)
 		{

@@ -19,9 +19,9 @@
 namespace Ld {
 	App::App()
 	{
-		m_globalPool = LdDescriptorPool::Builder(m_device)
-			.setMaxSets(LdSwapChain::s_maxFramesInFlight)
-			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LdSwapChain::s_maxFramesInFlight)
+		m_globalPool = DescriptorPool::Builder(m_device)
+			.setMaxSets(SwapChain::s_maxFramesInFlight)
+			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::s_maxFramesInFlight)
 			.build();
 
 		loadGameObjects();
@@ -33,10 +33,10 @@ namespace Ld {
 
 	void App::run()
 	{
-		std::vector<std::unique_ptr<LdBuffer>> uboBuffers(LdSwapChain::s_maxFramesInFlight);
+		std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::s_maxFramesInFlight);
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
-			uboBuffers[i] = std::make_unique<LdBuffer>(
+			uboBuffers[i] = std::make_unique<Buffer>(
 				m_device,
 				sizeof(GlobalUBO),
 				1,
@@ -46,25 +46,25 @@ namespace Ld {
 			uboBuffers[i]->map();
 		}
 
-		auto globalSetLayout = LdDescriptorSetLayout::Builder(m_device)
+		auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
 
-		std::vector<VkDescriptorSet> globalDescriptorSets(LdSwapChain::s_maxFramesInFlight);
+		std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::s_maxFramesInFlight);
 
 		for (int i = 0; i < globalDescriptorSets.size(); i++)
 		{
 			auto bufferInfo = uboBuffers[i]->descriptorInfo();
-			LdDescriptorWriter(*globalSetLayout, *m_globalPool)
+			DescriptorWriter(*globalSetLayout, *m_globalPool)
 				.writeBuffer(0, &bufferInfo)
 				.build(globalDescriptorSets[i]);
 		}
 
 		SimpleRenderSystem simpleRenderSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
 		PointLightSystem pointLightSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
-		LdCamera camera{};
+		Camera camera{};
 
-		auto viewerObject = LdGameObject::createGameObject();
+		auto viewerObject = GameObject::createGameObject();
 		viewerObject.transform.translation.z = -2.5f;
 		KeyboardMovementController cameraController{};
 
@@ -120,22 +120,22 @@ namespace Ld {
 
 	void App::loadGameObjects()
 	{
-		std::shared_ptr<LdModel> ldModel = LdModel::createModelFromFile(m_device, "models/flat_vase.obj");
-		auto flatVase = LdGameObject::createGameObject();
+		std::shared_ptr<Model> ldModel = Model::createModelFromFile(m_device, "models/flat_vase.obj");
+		auto flatVase = GameObject::createGameObject();
 		flatVase.model = ldModel;
 		flatVase.transform.translation = { -.5f, .5f, 0.f };
 		flatVase.transform.scale = { 3.f,1.5f, 3.f };
 		m_gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
-		ldModel = LdModel::createModelFromFile(m_device, "models/smooth_vase.obj");
-		auto smoothVase = LdGameObject::createGameObject();
+		ldModel = Model::createModelFromFile(m_device, "models/smooth_vase.obj");
+		auto smoothVase = GameObject::createGameObject();
 		smoothVase.model = ldModel;
 		smoothVase.transform.translation = { .5f, .5f, 0.f };
 		smoothVase.transform.scale = { 3.f,1.5f, 3.f };
 		m_gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
 
-		ldModel = LdModel::createModelFromFile(m_device, "models/quad.obj");
-		auto floor = LdGameObject::createGameObject();
+		ldModel = Model::createModelFromFile(m_device, "models/quad.obj");
+		auto floor = GameObject::createGameObject();
 		floor.model = ldModel;
 		floor.transform.translation = { 0.f, .5f, 0.f };
 		floor.transform.scale = { 3.f,1.f, 3.f };
@@ -152,7 +152,7 @@ namespace Ld {
 
 		for (int i = 0; i < lightColors.size(); i++)
 		{
-			auto pointLight = LdGameObject::makePointLight(0.2f);
+			auto pointLight = GameObject::makePointLight(0.2f);
 			pointLight.color = lightColors[i];
 			auto rotateLight = glm::rotate(
 				glm::mat4(1.f),
@@ -163,6 +163,6 @@ namespace Ld {
 			m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
 		}
 
-		std::unique_ptr<LdTexture> texture = LdTexture::createTextureFromFile(m_device, "textures/texture.jpg");
+		std::unique_ptr<Texture> texture = Texture::createTextureFromFile(m_device, "textures/texture.jpg");
 	}
 }
