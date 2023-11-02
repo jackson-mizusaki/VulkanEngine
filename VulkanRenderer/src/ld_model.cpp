@@ -69,39 +69,39 @@ namespace Ld {
 		VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCount;
 		uint32_t vertexSize = sizeof(vertices[0]);
 
-		VmaAllocationCreateInfo stagingAllocInfo{};
-		stagingAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
 		VkBufferCreateInfo stagingBufferCreateInfo{};
 		stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		stagingBufferCreateInfo.size = bufferSize;
 		stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
-		uint32_t alignmentSize = Ld::Buffer::getAlignment(vertexSize, 1);
+		VmaAllocationCreateInfo stagingAllocCreateInfo{};
+		stagingAllocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+		stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		//uint32_t alignmentSize = Ld::Buffer::getAlignment(vertexSize, 1);
 		Buffer stagingBuffer{
 			m_device,
 			stagingBufferCreateInfo,
-			vertexSize,
-			m_vertexCount,
-			stagingAllocInfo,
-			alignmentSize
+			stagingAllocCreateInfo,
 		};
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)vertices.data());
 
 		VkBufferCreateInfo vertexBufferCreateInfo{};
 		vertexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		vertexBufferCreateInfo.size = bufferSize;
 		vertexBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
-		VmaAllocationCreateInfo vertexAllocInfo{};
-		vertexAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		VmaAllocationCreateInfo vertexAllocCreateInfo{};
+		vertexAllocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		vertexAllocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+		vertexAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT;
 
 		m_vertexBuffer = std::make_unique<Buffer>(
 			m_device,
 			vertexBufferCreateInfo,
-			vertexSize,
-			m_vertexCount,
-			vertexAllocInfo,
-			alignmentSize
+			vertexAllocCreateInfo
 		);
 		m_device.copyBuffer(stagingBuffer.getBuffer(), m_vertexBuffer->getBuffer(), bufferSize);
 	}
@@ -119,39 +119,40 @@ namespace Ld {
 		VkDeviceSize bufferSize = sizeof(indices[0]) * m_indexCount;
 		uint32_t indexSize = sizeof(indices[0]);
 
-		VmaAllocationCreateInfo stagingAllocInfo{};
-		stagingAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 	
 		VkBufferCreateInfo stagingBufferCreateInfo{};
 		stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		stagingBufferCreateInfo.size = bufferSize;
 		stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-		
-		uint32_t alignmentSize = Ld::Buffer::getAlignment(indexSize, 1);
+
+		VmaAllocationCreateInfo stagingAllocInfo{};
+		stagingAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		stagingAllocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+		stagingAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+	//	uint32_t alignmentSize = Ld::Buffer::getAlignment(indexSize, 1);
 		Buffer stagingBuffer{
 			m_device,
 			stagingBufferCreateInfo,
-			indexSize,
-			m_indexCount,
 			stagingAllocInfo,
-			alignmentSize
 		};
 		stagingBuffer.map();
 		stagingBuffer.writeToBuffer((void*)indices.data());
 
 		VkBufferCreateInfo indexBufferCreateInfo{};
 		indexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		indexBufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		indexBufferCreateInfo.size = bufferSize;
+		indexBufferCreateInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
 		VmaAllocationCreateInfo indexAllocInfo{};
 		indexAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		indexAllocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+		indexAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT;
 
 		m_indexBuffer = std::make_unique<Buffer>(
 			m_device,
 			indexBufferCreateInfo,
-			indexSize,
-			m_indexCount,
-			indexAllocInfo,
-			alignmentSize
+			indexAllocInfo
 		);
 
 		m_device.copyBuffer(stagingBuffer.getBuffer(), m_indexBuffer->getBuffer(), bufferSize);

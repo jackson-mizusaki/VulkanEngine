@@ -555,7 +555,7 @@ namespace Ld
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void Device::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+	void Device::transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout)
 	{
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 

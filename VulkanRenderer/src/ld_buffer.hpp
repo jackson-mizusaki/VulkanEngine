@@ -17,10 +17,7 @@ namespace Ld {
 		Buffer(
 				Device& device,
 				VkBufferCreateInfo& createInfo,
-				VkDeviceSize instanceSize,
-				uint32_t instanceCount,
-				VmaAllocationCreateInfo& allocInfo,
-				VkDeviceSize alignmentSize
+				VmaAllocationCreateInfo& allocInfo
 		);
 		~Buffer();
 
@@ -35,7 +32,7 @@ namespace Ld {
 		//VkDeviceSize getAlignmentSize() const { return m_alignmentSize; }
 		//VkBufferUsageFlags getUsageFlags() const { return m_usageFlags; }
 		//VkMemoryPropertyFlags getMemoryPropertyFlags() const { return m_memoryPropertyFlags; }
-		VkDeviceSize getBufferSize() const { return m_bufferSize; }
+		VkDeviceSize getBufferSize() const { return m_allocationInfo.size; }
 		VkResult map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		void unmap();
 
@@ -43,11 +40,6 @@ namespace Ld {
 		VkResult flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		VkDescriptorBufferInfo descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 		VkResult invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-
-		void writeToIndex(void* data, int index);
-		VkResult flushIndex(int index);
-		VkDescriptorBufferInfo descriptorInfoForIndex(int index);
-		VkResult invalidateIndex(int index);
 
 		static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
 	private:
@@ -61,10 +53,10 @@ namespace Ld {
 		VmaAllocation m_allocation;
 		VmaAllocationInfo m_allocationInfo{};
 
-		VkDeviceSize m_bufferSize;
+		//VkDeviceSize m_bufferSize;
 		//uint32_t m_instanceCount;
-		VkDeviceSize m_instanceSize;
-		VkDeviceSize m_alignmentSize;
+		//VkDeviceSize m_instanceSize;
+		//VkDeviceSize m_alignmentSize;
 		//VkBufferUsageFlags m_usageFlags;
 	//	VkMemoryPropertyFlags m_memoryPropertyFlags;
 

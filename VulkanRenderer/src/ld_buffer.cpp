@@ -21,12 +21,12 @@ namespace Ld {
 	//	device.createBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_allocation);
 	//}
 
-	Buffer::Buffer(Device& device, VkBufferCreateInfo& createInfo, VkDeviceSize instanceSize, uint32_t instanceCount, VmaAllocationCreateInfo& allocInfo, VkDeviceSize alignmentSize)
-		: m_device{ device }, m_instanceSize{ instanceSize }, m_alignmentSize { alignmentSize }
+	Buffer::Buffer(Device& device, VkBufferCreateInfo& createInfo, VmaAllocationCreateInfo& allocCreateInfo)
+		: m_device{ device }//, m_instanceSize{ instanceSize }, m_alignmentSize { alignmentSize }
 	{	 
-		m_bufferSize = m_alignmentSize * instanceCount;
-		createInfo.size = m_bufferSize;
-		createBuffer(createInfo, allocInfo);
+		//m_bufferSize = m_alignmentSize * instanceCount;
+		//createInfo.size = m_bufferSize;
+		createBuffer(createInfo, allocCreateInfo);
 	}
 
 	Buffer::~Buffer()
@@ -57,9 +57,10 @@ namespace Ld {
 	{
 		assert(m_device.hasAllocator() && "allocator for device not created!");
 
-		if (vmaCreateBuffer(m_device.getAllocator(), &createInfo, &allocInfo, &m_buffer, &m_allocation, &m_allocationInfo) != VK_SUCCESS)
+		VkResult result = vmaCreateBuffer(m_device.getAllocator(), &createInfo, &allocInfo, &m_buffer, &m_allocation, &m_allocationInfo);
+		if (result != VK_SUCCESS)
 		{
-			throw std::runtime_error("failed to create vertex buffer!");
+			throw std::runtime_error("failed to create buffer!");
 		}
 	}
 
@@ -109,7 +110,7 @@ namespace Ld {
 
 		if (size == VK_WHOLE_SIZE)
 		{
-			memcpy(m_mapped, data, m_bufferSize);
+			memcpy(m_mapped, data, m_allocationInfo.size);
 		}
 		else
 		{
@@ -179,54 +180,4 @@ namespace Ld {
 			size,
 		};
 	}
-
-	/**
-	 * Copies "instanceSize" bytes of data to the mapped buffer at an offset of index * alignmentSize
-	 *
-	 * @param data Pointer to the data to copy
-	 * @param index Used in offset calculation
-	 *
-	 */
-	void Buffer::writeToIndex(void* data, int index)
-	{
-		writeToBuffer(data, m_instanceSize, index * m_alignmentSize);
-	}
-
-	/**
-	 *  Flush the memory range at index * alignmentSize of the buffer to make it visible to the device
-	 *
-	 * @param index Used in offset calculation
-	 *
-	 */
-	VkResult Buffer::flushIndex(int index)
-	{
-		return flush(m_alignmentSize, index * m_alignmentSize);
-	}
-
-	/**
-	 * Create a buffer info descriptor
-	 *
-	 * @param index Specifies the region given by index * alignmentSize
-	 *
-	 * @return VkDescriptorBufferInfo for instance at index
-	 */
-	VkDescriptorBufferInfo Buffer::descriptorInfoForIndex(int index)
-	{
-		return descriptorInfo(m_alignmentSize, index * m_alignmentSize);
-	}
-
-	/**
-	 * Invalidate a memory range of the buffer to make it visible to the host
-	 *
-	 * @note Only required for non-coherent memory
-	 *
-	 * @param index Specifies the region to invalidate: index * alignmentSize
-	 *
-	 * @return VkResult of the invalidate call
-	 */
-	VkResult Buffer::invalidateIndex(int index)
-	{
-		return invalidate(m_alignmentSize, index * m_alignmentSize);
-	}
-
 }  // namespace Ld

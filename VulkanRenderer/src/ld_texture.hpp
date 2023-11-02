@@ -9,7 +9,6 @@
 
 namespace Ld {
 	class Texture {
-		friend class Image;
 	public: // constructors
 		Texture(Device& device, const std::string& filepath);
 		~Texture();               // destructor 
@@ -23,18 +22,21 @@ namespace Ld {
 		void createTextureImage(const std::string& filepath);
 	private:
 		void initializeImage();
+		void createTextureImageView();
 
 	private: // data
 		Device& m_device;
-		std::shared_ptr<Image> m_image = nullptr;
+		std::shared_ptr<Image> m_image = nullptr; // image may be shared by many objects
 		VkImage m_textureImage = nullptr;
 		VmaAllocation m_allocation;
+		VmaAllocationInfo m_allocationInfo;
+
 		VkImageView m_textureImageView = nullptr;
 		VkSampler m_textureSampler = nullptr;
 		VkFormat m_format;
 		VkImageLayout m_textureLayout;
 		uint32_t m_mipLevels{ 1 };
 		uint32_t m_layerCount{ 1 };
-		VkExtent3D m_extent{};
+		VkExtent3D m_extent;
 	};
 }

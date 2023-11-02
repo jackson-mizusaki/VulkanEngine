@@ -37,21 +37,25 @@ namespace Ld {
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
 			uint32_t instanceCount = 1;
-			VmaAllocationCreateInfo uboAllocInfo{};
-			uboAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 			VkDeviceSize alignmentSize = Ld::Buffer::getAlignment(sizeof(GlobalUBO), instanceCount);
+
 			VkBufferCreateInfo bufferCreateInfo{};
 			bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+			bufferCreateInfo.size = sizeof(GlobalUBO);
 			bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-			bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+			bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;		
+			
+			VmaAllocationCreateInfo uboAllocInfo{};
+			uboAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+			uboAllocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+			uboAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+
 			uboBuffers[i] = std::make_unique<Buffer>(
 				m_device,
 				bufferCreateInfo,
-				sizeof(GlobalUBO),
-				instanceCount,
-				uboAllocInfo,
-				alignmentSize
+				uboAllocInfo
 			);
 			if (uboBuffers[i]->map() != VK_SUCCESS)
 			{

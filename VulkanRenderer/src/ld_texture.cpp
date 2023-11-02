@@ -8,7 +8,7 @@
 
 namespace Ld {
 	Texture::Texture(Device& device, const std::string& filepath)
-		: m_device{device}
+		: m_device{ device }
 	{
 		createTextureImage(filepath);
 	}
@@ -22,6 +22,7 @@ namespace Ld {
 	std::unique_ptr<Texture> Texture::createTextureFromFile(Device& device, const std::string& filepath)
 	{
 		return std::make_unique<Texture>(device, filepath);
+
 	}
 
 	void Texture::createTextureImage(const std::string& filepath)
@@ -29,33 +30,56 @@ namespace Ld {
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
+		m_format = VK_FORMAT_R8G8B8A8_SRGB;
+		m_extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
+		m_mipLevels = 1;
 
+		initializeImage();
+
+		assert(m_image && "Image was not initialized");
 		if (!pixels) {
 			throw std::runtime_error("failed to load texture image!");
 		}
 
-		VmaAllocationCreateInfo stagingInfo{};
-		stagingInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-		Buffer stagingBuffer{
+		VkBufferCreateInfo stagingBufferCreateInfo{};
+		stagingBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		stagingBufferCreateInfo.size = imageSize;
+		stagingBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		stagingBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VmaAllocationCreateInfo allocCreateInfo{};
+		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+		Buffer stagingBuffer(
 			m_device,
-			imageSize,
-			1,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			stagingInfo
-		};
-		 
-		stagingBuffer.map();
-		stagingBuffer.writeToBuffer((void*)pixels, imageSize);
+			stagingBufferCreateInfo,
+			allocCreateInfo
+		);
 
+		stagingBuffer.map();
+		stagingBuffer.writeToBuffer(pixels);
 		stagingBuffer.unmap();
+
 		stbi_image_free(pixels);
 
-		m_mipLevels = 1; // extend for mipmaps
 
-		m_format = VK_FORMAT_R8G8B8A8_SRGB;
-		m_extent = { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1 };
+		m_image->transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		m_image->copyBufferToImage(
+			stagingBuffer);
 
+		// comment this out if using mips
+		m_image->transitionImageLayout(	VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+		// If we generate mip maps then the final image will alerady be READ_ONLY_OPTIMAL
+		// mDevice.generateMipmaps(mTextureImage, mFormat, texWidth, texHeight, mMipLevels);
+		m_textureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		
+	}
+	void Texture::initializeImage()
+	{
 		VkImageCreateInfo imageInfo{};
 		imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 		imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -70,34 +94,18 @@ namespace Ld {
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		VmaAllocationCreateInfo imageAllocInfo{};
-		imageAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		VmaAllocationCreateInfo allocInfo{};
+		allocInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+		//allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT;
 
-		m_device.createImageWithInfo(
+		// create image
+		m_image = std::make_shared<Image>(
+			m_device,
 			imageInfo,
-			m_textureImage,
-			m_allocation,
-			imageAllocInfo			
-		);
-		m_device.transitionImageLayout(
-			m_textureImage,
-			VK_FORMAT_R8G8B8A8_SRGB,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
-		);
-		m_device.copyBufferToImage(
-			stagingBuffer.getBuffer(),
-			m_textureImage, 
-			static_cast<uint32_t>(texWidth),
-			static_cast<uint32_t>(texHeight),
-			m_layerCount
+			allocInfo
 		);
 
-		m_device.transitionImageLayout(
-			m_textureImage, 
-			VK_FORMAT_R8G8B8A8_SRGB,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-		);
+
 	}
 }
