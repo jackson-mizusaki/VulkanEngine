@@ -16,7 +16,6 @@ namespace Ld {
 	Texture::~Texture()
 	{
 		vkDestroySampler(m_device.device(), m_textureSampler, nullptr);
-		vmaDestroyImage(m_device.getAllocator(), m_textureImage, m_allocation);
 	}
 
 	std::unique_ptr<Texture> Texture::createTextureFromFile(Device& device, const std::string& filepath)
@@ -78,6 +77,7 @@ namespace Ld {
 		m_textureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		
 	}
+
 	void Texture::initializeImage()
 	{
 		VkImageCreateInfo imageInfo{};
@@ -100,12 +100,58 @@ namespace Ld {
 		//allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT;
 
 		// create image
-		m_image = std::make_shared<Image>(
+		m_image = std::make_unique<Image>(
 			m_device,
 			imageInfo,
 			allocInfo
 		);
 
 
+	}
+	void Texture::createTextureImageView(VkImageViewType viewType)
+	{
+		VkImageViewCreateInfo viewInfo{};
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.viewType = viewType;
+		viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = m_mipLevels;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = m_layerCount;
+		if (m_image->createImageView(viewInfo) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create texture image view!");
+		}
+	}
+
+	void Texture::createTextureSampler()
+	{
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+
+		samplerInfo.anisotropyEnable = VK_TRUE;
+		samplerInfo.maxAnisotropy = 16.0f;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+		// these fields useful for percentage close filtering for shadow maps
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.minLod = 0.0f;
+		samplerInfo.maxLod = static_cast<float>(m_mipLevels);
+
+		if (vkCreateSampler(m_device.device(), &samplerInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
 	}
 }

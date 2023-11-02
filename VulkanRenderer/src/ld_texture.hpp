@@ -20,18 +20,17 @@ namespace Ld {
 	public: // functions 
 		static std::unique_ptr<Texture> createTextureFromFile(Device& device, const std::string& filepath);
 		void createTextureImage(const std::string& filepath);
+		void createTextureSampler();
 	private:
 		void initializeImage();
-		void createTextureImageView();
+		void createTextureImageView(VkImageViewType viewType);
 
 	private: // data
 		Device& m_device;
-		std::shared_ptr<Image> m_image = nullptr; // image may be shared by many objects
-		VkImage m_textureImage = nullptr;
+		std::unique_ptr<Image> m_image = nullptr; // image may be shared by many objects
 		VmaAllocation m_allocation;
 		VmaAllocationInfo m_allocationInfo;
 
-		VkImageView m_textureImageView = nullptr;
 		VkSampler m_textureSampler = nullptr;
 		VkFormat m_format;
 		VkImageLayout m_textureLayout;

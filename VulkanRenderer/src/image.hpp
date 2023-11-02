@@ -24,10 +24,10 @@ namespace Ld {
 		VkImageView getImageView() { return m_imageView; }	
 		void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
 		void copyBufferToImage(Buffer& buffer);
+		VkResult createImageView(VkImageViewCreateInfo& createInfo);
 	private:
 		void createImage(VkImageCreateInfo& createInfo, VmaAllocationCreateInfo& allocInfo);
 		//static std::unique_ptr<Image> loadImageFromFile(Device& device, const std::string& filepath);
-		void createImageView();
 		void loadImage(const std::string& filepath);
 
 	public: // data

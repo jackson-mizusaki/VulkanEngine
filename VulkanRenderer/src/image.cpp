@@ -11,7 +11,7 @@ namespace Ld {
 
 	Image::~Image()
 	{
-		
+		vkDestroyImageView(m_device.device(), m_imageView, nullptr);
 		vmaDestroyImage(m_device.getAllocator(), m_image, m_allocation);
 	}
 
@@ -33,5 +33,11 @@ namespace Ld {
 	void Image::copyBufferToImage(Buffer& buffer)
 	{
 		m_device.copyBufferToImage(buffer.getBuffer(), m_image, m_extent.width, m_extent.height, m_layerCount);
+	}
+
+	VkResult Image::createImageView(VkImageViewCreateInfo& createInfo)
+	{
+		createInfo.image = m_image;
+		return vkCreateImageView(m_device.device(), &createInfo, nullptr, &m_imageView);
 	}
 }
