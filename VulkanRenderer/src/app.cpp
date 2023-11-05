@@ -36,10 +36,6 @@ namespace Ld {
 		std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::s_maxFramesInFlight);
 		for (int i = 0; i < uboBuffers.size(); i++)
 		{
-			uint32_t instanceCount = 1;
-
-			VkDeviceSize alignmentSize = Ld::Buffer::getAlignment(sizeof(GlobalUBO), instanceCount);
-
 			VkBufferCreateInfo bufferCreateInfo{};
 			bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 			bufferCreateInfo.size = sizeof(GlobalUBO);
@@ -50,7 +46,6 @@ namespace Ld {
 			uboAllocInfo.requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 			uboAllocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 			uboAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
-
 
 			uboBuffers[i] = std::make_unique<Buffer>(
 				m_device,
@@ -63,6 +58,7 @@ namespace Ld {
 			}
 		}
 
+		// Build Uniform Buffer Descriptor Sets
 		auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
 			.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.build();
@@ -133,6 +129,11 @@ namespace Ld {
 			}
 		}
 		vkDeviceWaitIdle(m_device.device());
+	}
+
+	void App::addScene(Scene& scene)
+	{
+		scenes.push_back(scene);
 	}
 
 	void App::loadGameObjects()

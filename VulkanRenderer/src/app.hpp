@@ -7,6 +7,7 @@
 #include "ld_game_object.hpp"
 #include "ld_descriptors.hpp"
 #include "vk_mem_alloc.h"
+#include "scene.hpp"
 #include <memory>
 #include <vector>
 
@@ -20,6 +21,8 @@ namespace Ld {
 
 	public: // functions
 		void run();
+		void addScene(Scene& scene);
+		void setDefaultScene(uint32_t sceneIndex) { m_defaultScene = sceneIndex; }
 	private:
 		void loadGameObjects();
 
@@ -31,7 +34,9 @@ namespace Ld {
 		Device m_device{ m_window };
 		Renderer m_renderer{ m_window, m_device };
 
+		int m_defaultScene = -1;
 		std::unique_ptr<DescriptorPool> m_globalPool{};
+		std::vector<Scene> scenes;
 		GameObject::Map m_gameObjects;
 	};
 }

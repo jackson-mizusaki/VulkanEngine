@@ -14,19 +14,19 @@ namespace Ld {
 		VkShaderStageFlags stageFlags,
 		uint32_t count)
 	{
-		assert(bindings.count(binding) == 0 && "Binding already in use");
+		assert(m_bindings.count(binding) == 0 && "Binding already in use");
 		VkDescriptorSetLayoutBinding layoutBinding{};
 		layoutBinding.binding = binding;
 		layoutBinding.descriptorType = descriptorType;
 		layoutBinding.descriptorCount = count;
 		layoutBinding.stageFlags = stageFlags;
-		bindings[binding] = layoutBinding;
+		m_bindings[binding] = layoutBinding;
 		return *this;
 	}
 
 	std::unique_ptr<DescriptorSetLayout> DescriptorSetLayout::Builder::build() const
 	{
-		return std::make_unique<DescriptorSetLayout>(ldDevice, bindings);
+		return std::make_unique<DescriptorSetLayout>(m_device, m_bindings);
 	}
 
 	// *************** Descriptor Set Layout *********************
@@ -60,24 +60,24 @@ namespace Ld {
 
 	DescriptorPool::Builder& DescriptorPool::Builder::addPoolSize(VkDescriptorType descriptorType, uint32_t count)
 	{
-		poolSizes.push_back({ descriptorType, count });
+		m_poolSizes.push_back({ descriptorType, count });
 		return *this;
 	}
 
 	DescriptorPool::Builder& DescriptorPool::Builder::setPoolFlags(VkDescriptorPoolCreateFlags flags)
 	{
-		poolFlags = flags;
+		m_poolFlags = flags;
 		return *this;
 	}
 	DescriptorPool::Builder& DescriptorPool::Builder::setMaxSets(uint32_t count)
 	{
-		maxSets = count;
+		m_maxSets = count;
 		return *this;
 	}
 
 	std::unique_ptr<DescriptorPool> DescriptorPool::Builder::build() const
 	{
-		return std::make_unique<DescriptorPool>(ldDevice, maxSets, poolFlags, poolSizes);
+		return std::make_unique<DescriptorPool>(m_device, m_maxSets, m_poolFlags, m_poolSizes);
 	}
 
 	// *************** Descriptor Pool *********************

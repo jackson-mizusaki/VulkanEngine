@@ -170,10 +170,12 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\accessor.cpp" />
     <ClCompile Include="src\app.cpp" />
+    <ClCompile Include="src\gltf_importer.cpp" />
     <ClCompile Include="src\image.cpp" />
     <ClCompile Include="src\keyboard_movement_controller.cpp" />
-    <ClCompile Include="src\ld_allocator.cpp" />
+    <ClCompile Include="src\ld_ allocator.cpp" />
     <ClCompile Include="src\ld_buffer.cpp" />
     <ClCompile Include="src\ld_camera.cpp" />
     <ClCompile Include="src\ld_descriptors.cpp" />
@@ -187,11 +189,23 @@
     <ClCompile Include="src\ld_texture.cpp" />
     <ClCompile Include="src\ld_window.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\meshprimitive.cpp" />
+    <ClCompile Include="src\node.cpp" />
+    <ClCompile Include="src\scene.cpp" />
+    <ClCompile Include="src\scene_node.cpp" />
     <ClCompile Include="Systems\point_light_system.cpp" />
     <ClCompile Include="Systems\simple_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\bone.hpp" />
+    <ClInclude Include="src\glmjson.hpp" />
+    <ClInclude Include="src\meshprimitive.hpp" />
+    <ClInclude Include="src\node.hpp" />
+    <ClInclude Include="src\scene_node.hpp" />
+    <ClInclude Include="src\accessor.hpp" />
+    <ClInclude Include="src\animation.hpp" />
     <ClInclude Include="src\app.hpp" />
+    <ClInclude Include="src\gltf_importer.hpp" />
     <ClInclude Include="src\image.hpp" />
     <ClInclude Include="src\keyboard_movement_controller.hpp" />
     <ClInclude Include="src\ld_allocator.hpp" />
@@ -207,6 +221,10 @@
     <ClInclude Include="src\ld_texture.hpp" />
     <ClInclude Include="src\ld_utils.hpp" />
     <ClInclude Include="src\ld_window.hpp" />
+    <ClInclude Include="src\material.hpp" />
+    <ClInclude Include="src\mesh.hpp" />
+    <ClInclude Include="src\scene.hpp" />
+    <ClInclude Include="src\skin.hpp" />
     <ClInclude Include="systems\point_light_system.hpp" />
     <ClInclude Include="Systems\simple_render_system.hpp" />
   </ItemGroup>

@@ -30,7 +30,7 @@ namespace Ld {
 		stbi_uc* pixels = stbi_load(filepath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
 		m_format = VK_FORMAT_R8G8B8A8_SRGB;
-		m_extent = {static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1};
+		m_extent = { static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight), 1 };
 		m_mipLevels = 1;
 
 		initializeImage();
@@ -70,12 +70,112 @@ namespace Ld {
 			stagingBuffer);
 
 		// comment this out if using mips
-		m_image->transitionImageLayout(	VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		m_image->transitionImageLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		// If we generate mip maps then the final image will alerady be READ_ONLY_OPTIMAL
 		// mDevice.generateMipmaps(mTextureImage, mFormat, texWidth, texHeight, mMipLevels);
 		m_textureLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		
+
+	}
+
+	void Texture::createTextureImage(Image* image)
+	{
+	}
+
+	void Texture::createTextureSampler(const Sampler& sampler)
+	{
+		VkSamplerCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		switch (sampler.magFilter)
+		{
+		case Sampler::MagnificationFilter::Nearest:
+			createInfo.magFilter = VK_FILTER_NEAREST;
+			break;
+		case Sampler::MagnificationFilter::Linear:
+			createInfo.magFilter = VK_FILTER_LINEAR;
+			break;
+		default:
+			// error?
+			break;
+		}
+		switch (sampler.minFilter)
+		{
+		case Sampler::MinificationFilter::Nearest:
+			createInfo.minFilter = VK_FILTER_NEAREST;
+			break;
+		case Sampler::MinificationFilter::Linear:
+			createInfo.minFilter = VK_FILTER_LINEAR;
+			break;
+		case Sampler::MinificationFilter::NearestMipMapNearest:
+			// generate MipMaps?  or fallback to VK_FILTER_NEAREST
+			createInfo.minFilter = VK_FILTER_NEAREST;
+			createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			break;
+		case Sampler::MinificationFilter::LinearMipMapNearest:
+			// generate MipMaps?
+			createInfo.minFilter = VK_FILTER_LINEAR;
+			createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			break;
+		case Sampler::MinificationFilter::NearestMipMapLinear:
+			// generate MipMaps?  or fallback to VK_FILTER_NEAREST
+			createInfo.minFilter = VK_FILTER_NEAREST;
+			createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			break;
+		case Sampler::MinificationFilter::LinearMipMapLinear:
+			// generate MipMaps?
+			createInfo.minFilter = VK_FILTER_LINEAR;
+			createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			break;
+		default:
+			// error?
+			break;
+		}
+		switch (sampler.wrapS)
+		{
+		case Sampler::WrapMode::ClampToEdge:
+			createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			break;
+		case Sampler::WrapMode::MirroredRepeat:
+			createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			break;
+		case Sampler::WrapMode::Repeat:
+			createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			break;
+		default:
+			// error?
+			break;
+		}
+		switch (sampler.wrapT)
+		{
+		case Sampler::WrapMode::ClampToEdge:
+			createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			break;
+		case Sampler::WrapMode::MirroredRepeat:
+			createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+			break;
+		case Sampler::WrapMode::Repeat:
+			createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+			break;
+		default:
+			// error?
+			break;
+		}
+
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(m_device.getPhysicalDevice(), &properties);
+		createInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+		createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		createInfo.unnormalizedCoordinates = VK_FALSE;
+
+		createInfo.compareEnable = VK_FALSE;
+		createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+		createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		createInfo.mipLodBias = 0.0f;
+		createInfo.minLod = 0.0f;
+		createInfo.maxLod = 0.0f;
+		if (vkCreateSampler(m_device.device(), &createInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
 	}
 
 	void Texture::initializeImage()
@@ -125,33 +225,33 @@ namespace Ld {
 		}
 	}
 
-	void Texture::createTextureSampler()
-	{
-		VkSamplerCreateInfo samplerInfo{};
-		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-		samplerInfo.magFilter = VK_FILTER_LINEAR;
-		samplerInfo.minFilter = VK_FILTER_LINEAR;
+	//void Texture::createTextureSampler()
+	//{
+	//	VkSamplerCreateInfo createInfo{};
+	//	createInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	//	createInfo.magFilter = VK_FILTER_LINEAR;
+	//	createInfo.minFilter = VK_FILTER_LINEAR;
 
-		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	//	createInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	//	createInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	//	createInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
-		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = 16.0f;
-		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	//	createInfo.anisotropyEnable = VK_TRUE;
+	//	createInfo.maxAnisotropy = 16.0f;
+	//	createInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	//	createInfo.unnormalizedCoordinates = VK_FALSE;
 
-		// these fields useful for percentage close filtering for shadow maps
-		samplerInfo.compareEnable = VK_FALSE;
-		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	//	// these fields useful for percentage close filtering for shadow maps
+	//	createInfo.compareEnable = VK_FALSE;
+	//	createInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 
-		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerInfo.mipLodBias = 0.0f;
-		samplerInfo.minLod = 0.0f;
-		samplerInfo.maxLod = static_cast<float>(m_mipLevels);
+	//	createInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	//	createInfo.mipLodBias = 0.0f;
+	//	createInfo.minLod = 0.0f;
+	//	createInfo.maxLod = static_cast<float>(m_mipLevels);
 
-		if (vkCreateSampler(m_device.device(), &samplerInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture sampler!");
-		}
-	}
+	//	if (vkCreateSampler(m_device.device(), &createInfo, nullptr, &m_textureSampler) != VK_SUCCESS) {
+	//		throw std::runtime_error("failed to create texture sampler!");
+	//	}
+	//}
 }

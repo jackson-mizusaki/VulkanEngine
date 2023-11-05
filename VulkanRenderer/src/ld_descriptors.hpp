@@ -13,20 +13,19 @@ namespace Ld {
 
 	public: // types
 		class Builder {
-		public:
-			Builder(Device& device) : ldDevice{ device } {}
+		public: // constructors
+			Builder(Device& device) : m_device{ device } {}
 
-		public:
+		public: // functions
 			Builder& addBinding(uint32_t binding,
 				VkDescriptorType descriptorType,
 				VkShaderStageFlags stageFlags,
 				uint32_t count = 1);
 
 			std::unique_ptr<DescriptorSetLayout> build() const;
-
-		private:
-			Device& ldDevice;
-			std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings{};
+		private: // data
+			Device& m_device;
+			std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> m_bindings{};
 		};
 
 	public: // constructors
@@ -50,20 +49,20 @@ namespace Ld {
 
 	public: // types
 		class Builder {
-		public:
-			Builder(Device& ldDevice) : ldDevice{ ldDevice } {}
+		public: // constructors
+			Builder(Device& ldDevice) : m_device{ ldDevice } {}
 
-		private:
-			Device& ldDevice;
-			std::vector<VkDescriptorPoolSize> poolSizes{};
-			uint32_t maxSets = 1000;
-			VkDescriptorPoolCreateFlags poolFlags = 0;
-
-		public:
+		public: // functions
 			Builder& addPoolSize(VkDescriptorType descriptorType, uint32_t count);
 			Builder& setPoolFlags(VkDescriptorPoolCreateFlags flags);
 			Builder& setMaxSets(uint32_t count);
 			std::unique_ptr<DescriptorPool> build() const;
+
+		private: // data
+			Device& m_device;
+			std::vector<VkDescriptorPoolSize> m_poolSizes{};
+			uint32_t m_maxSets = 1000;
+			VkDescriptorPoolCreateFlags m_poolFlags = 0;
 		};
 
 	public: // constructors

@@ -6,6 +6,11 @@
 
 namespace Ld {
 	class Camera {
+	public: // types
+		enum CameraProjectionType {
+			Perspective,
+			Orthographic
+		};
 	public: // constructors
 
 	public: // functions
@@ -26,6 +31,7 @@ namespace Ld {
 	private:
 
 	public: // data
+		CameraProjectionType projectionType;
 	private: 
 		glm::mat4 m_projectionMatrix{ 1.f };
 		glm::mat4 m_viewMatrix{ 1.f };

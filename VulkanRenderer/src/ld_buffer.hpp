@@ -4,7 +4,6 @@
 #include "ld_allocator.hpp"
 
 namespace Ld {
-
 	class Buffer {
 	public: // constructors
 /*		Buffer(

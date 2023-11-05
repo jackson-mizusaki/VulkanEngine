@@ -38,6 +38,7 @@ namespace Ld {
 		VkSurfaceKHR surface() { return m_surface; }
 		VkQueue graphicsQueue() { return m_graphicsQueue; }
 		VkQueue presentQueue() { return m_presentQueue; }
+		VkPhysicalDevice getPhysicalDevice() { return m_physicalDevice; }
 		bool hasAllocator() { return m_allocator; }
 
 		SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(m_physicalDevice); }
@@ -45,7 +46,6 @@ namespace Ld {
 		QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(m_physicalDevice); }
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 		VmaAllocator getAllocator() { return m_allocator;  }
-
 		// Buffer Helper Functions
 		//void createBuffer(
 		//	VkBufferCreateInfo& createInfo,

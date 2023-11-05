@@ -1,18 +1,21 @@
-#pragma once
+#pragma once 
 
-#include "ld_device.hpp"
 #include "ld_buffer.hpp"
+#include "accessor.hpp"
 #include "material.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <json.hpp>
 
-#include <memory>
 #include <vector>
+#include <string>
+
+using json = nlohmann::json;
 
 namespace Ld {
-	class Model {
+	class MeshPrimitive {
 	public: // types
 		struct Vertex {
 			bool operator==(const Vertex& other) const {
@@ -31,31 +34,45 @@ namespace Ld {
 		};
 
 		struct Builder {
-			void loadModel(const std::string& filepath);
-
+			void loadMeshPrimitive(const Accessor& accessor);
+			void loadVertices(const Accessor& accessor);
+			void loadIndices(const Accessor& accessor);
 			std::vector<Vertex> vertices{};
 			std::vector<uint32_t> indices{};
 		};
-		
-	public: // constructors
-		Model(Device& device, const Model::Builder &builder);
-		~Model();
 
-		Model(const Model&) = delete;
-		Model& operator=(const Model&) = delete;
+		enum RenderingMode {
+			Points,
+			Lines,
+			Line_Loop,
+			Line_Strip,
+			Triangles,
+			Triangle_Strip,
+			Triangle_Fan
+		};
+	public: // constructors
+		MeshPrimitive(Builder& builder);
+		MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder);
+		~MeshPrimitive();
+
+		MeshPrimitive(const MeshPrimitive&) = delete;
+		MeshPrimitive& operator=(const MeshPrimitive&) = delete;
 
 	public: // functions
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 
-		static std::unique_ptr<Model> createModelFromFile(Device& device, const std::string& filepath);
+		static std::unique_ptr<MeshPrimitive> createMeshPrimitiveFromFile(Device& device, const std::string& filepath);
+
+		
 	private:
 		void createVertexBuffers(const std::vector<Vertex>& vertices);
 		void createIndexBuffers(const std::vector<uint32_t>& indices);
 
 	public: // data
 	private:
-		Device& m_device;
+		RenderingMode mode;
+		Material* material;
 
 		std::unique_ptr<Buffer> m_vertexBuffer;
 		uint32_t m_vertexCount;

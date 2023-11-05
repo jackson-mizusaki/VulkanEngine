@@ -9,6 +9,35 @@
 
 namespace Ld {
 	class Texture {
+	public: // Types
+		class Sampler {
+		public: // types
+			enum MagnificationFilter {
+				Nearest,
+				Linear
+			};
+			enum MinificationFilter {
+				Nearest,
+				Linear,
+				NearestMipMapNearest,
+				LinearMipMapNearest,
+				NearestMipMapLinear,
+				LinearMipMapLinear
+			};
+			enum WrapMode {
+				ClampToEdge,
+				MirroredRepeat,
+				Repeat
+			};
+		public: // data
+			MagnificationFilter magFilter;
+			MinificationFilter minFilter;
+			WrapMode wrapS = Repeat;
+			WrapMode wrapT = Repeat;
+			std::string name;
+			//json extensions
+			//json extras
+		};
 	public: // constructors
 		Texture(Device& device, const std::string& filepath);
 		~Texture();               // destructor 
@@ -20,7 +49,8 @@ namespace Ld {
 	public: // functions 
 		static std::unique_ptr<Texture> createTextureFromFile(Device& device, const std::string& filepath);
 		void createTextureImage(const std::string& filepath);
-		void createTextureSampler();
+		void createTextureImage(Image* image);
+		void createTextureSampler(const Sampler& sampler);
 	private:
 		void initializeImage();
 		void createTextureImageView(VkImageViewType viewType);
