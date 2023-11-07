@@ -40,10 +40,9 @@ namespace Ld {
 		Device& m_device;
 		Buffer* buffer = nullptr;
 		uint32_t binding = 0;
-		VkBufferView bufferView;
 		uint32_t byteOffset = 0;
-		std::vector<float> Maxes;
-		std::vector<float> Mins;
+		std::vector<float> maxes;
+		std::vector<float> mins;
 		ComponentType componentType = Byte;
 		bool isNormalized = false;
 		uint32_t count = 0;

@@ -18,53 +18,84 @@ namespace Ld {
 		{
 			throw std::runtime_error("Asset is missing, gltf is invalid");
 		}
-		for (json bufferData : j.at("buffers"))
+		if (j.contains("buffers"))
 		{
-			GlTFBuffer buffer;
-			loadBuffer(buffer, bufferData);
-			buffers.push_back(&buffer);
+			for (json bufferData : j.at("buffers"))
+			{
+				GlTFBuffer buffer;
+				loadBuffer(buffer, bufferData);
+				buffers.push_back(&buffer);
+			}
 		}
-		for (json bufferViewData : j.at("bufferViews"))
+		if (j.contains("bufferViews"))
 		{
-			GlTFBufferView bufferView;
-			loadBufferView(bufferView, bufferViewData);
-			bufferViews.push_back(&bufferView);
+			for (json bufferViewData : j.at("bufferViews"))
+			{
+				GlTFBufferView bufferView;
+				loadBufferView(bufferView, bufferViewData);
+				bufferViews.push_back(&bufferView);
+			}
 		}
-		for (json imageData : j.at("images"))
+		if (j.contains("images")) 
 		{
-			GlTFImage image;
-			loadImage(image, imageData);
-			images.push_back(&image);
+			for (json imageData : j.at("images"))
+			{
+				GlTFImage image;
+				loadImage(image, imageData);
+				images.push_back(&image);
+			}
 		}
-		for (json accessorData : j["accessors"])
+		if (j.contains("accessors"))  
 		{
-			Accessor accessor{ m_device };
-			loadAccessor(accessor, accessorData);
-			accessors.push_back(&accessor);
+			for (json accessorData : j["accessors"])
+			{
+				Accessor accessor{ m_device };
+				loadAccessor(accessor, accessorData);
+				accessors.push_back(&accessor);
+			}
 		}
-		for (json meshData : j["meshes"])
+		if (j.contains("meshes"))
 		{
-			Mesh mesh;
-			loadMesh(mesh, meshData);
-			meshes.push_back(&mesh);
+			for (json meshData : j["meshes"])
+			{
+				Mesh mesh;
+				loadMesh(mesh, meshData);
+				meshes.push_back(&mesh);
+			}
 		}
-		for (json cameraData : j["cameras"])
+		if (j.contains("cameras"))
 		{
-			Camera camera;
-			loadCamera(camera, cameraData);
-			cameras.push_back(&camera);
+			for (json cameraData : j["cameras"])
+			{
+				Camera camera;
+				loadCamera(camera, cameraData);
+				cameras.push_back(&camera);
+			}
 		}
-		for (json skinData : j["skins"])
+		if (j.contains("skins"))
 		{
-			Skin skin;
-			loadSkin(skin, skinData);
-			skins.push_back(&skin);
+			for (json skinData : j["skins"])
+			{
+				Skin skin;
+				loadSkin(skin, skinData);
+				skins.push_back(&skin);
+			}
 		}
-		for (auto& [index, nodeData] : j.at("nodes").items())
+		if (j.contains("nodes"))
 		{
-			SceneNode newNode;
-			loadSceneNode(newNode, nodeData, std::stoi(index));
-			sceneNodes.push_back(&newNode);
+			for (auto& [key, nodeData] : j.at("nodes").items())
+			{
+				SceneNode newNode;
+				int index = 0;
+				try {
+					index = std::stoi(key);
+				}
+				catch (std::exception e) {
+					throw e;
+				}
+				loadSceneNode(newNode, nodeData,index);
+				sceneNodes.push_back(&newNode);
+			}
 		}
 		int defaultScene = 0;
 		if (j.contains("scenes"))
@@ -79,14 +110,15 @@ namespace Ld {
 			Scene newScene{};
 			loadScene(newScene, j.at("scenes")[defaultScene]);
 			scenes.push_back(newScene);
-			j.at("scenes").erase(defaultScene);
+			j.at("scenes").erase(defaultScene);		
+			for (json s : j["scenes"])
+			{
+				Scene newScene{};
+				loadScene(newScene, s);
+				scenes.push_back(newScene);
+			}
 		}
-		for (json s : j["scenes"])
-		{
-			Scene newScene{};
-			loadScene(newScene, s);
-			scenes.push_back(newScene);
-		}
+
 
 	}
 	void GlTFImporter::loadBuffer(GlTFBuffer& buffer, json bufferData)
@@ -213,8 +245,7 @@ namespace Ld {
 		}
 		if (accessorData.contains("bufferView"))
 		{
-			GlTFBufferView* bufferView = bufferViews.at(accessorData.at("bufferVew"));
-
+			GlTFBufferView* bufferView = bufferViews.at(accessorData.at("bufferView"));
 		}
 		accessor.count = accessorData.at("count");
 		if (accessorData.contains("sparse"))
@@ -293,10 +324,28 @@ namespace Ld {
 		else {
 			throw std::runtime_error("Accessor Type not valid!");
 		}
-		accessor.Maxes.resize(componentCount);
-		accessor.Mins.resize(componentCount);
+		accessor.maxes.resize(componentCount);
+		accessor.mins.resize(componentCount);
+		if (accessorData.contains("max"))  
+		{
+			for (int i = 0; i < componentCount; i++)
+			{
+				accessor.maxes[i] = accessorData.at("max")[i];
+			}
+		}
+		if (accessorData.contains("min"))
+		{
+			for (int i = 0; i < componentCount; i++)
+			{
+				accessor.mins[i] = accessorData.at("min")[i];
+			}
+		}
+		if (accessorData.contains("byteOffset"))
+		{
+			accessor.byteOffset = accessorData.at("byteOffset");
+		}
 		elementSize = byteSize * componentCount;
-
+		// now 
 	}
 
 
@@ -312,42 +361,78 @@ namespace Ld {
 			// for each attribute
 			// create primitive using a MeshPrimtiive Builder
 			MeshPrimitive::Builder builder{ };
+			int ind = 0;
 			for (auto& [key, value] : primData.at("attributes").items())
 			{
 				if (key.compare("POSITION") == 0)
 				{
 					// value is the accessor that defines the vertices
 					builder.positionsAccessor = accessors.at(value);
+					continue;
 				}
 				if (key.compare("NORMAL") == 0)
 				{
 					// value is the accessor that defines the normals
 					builder.normalsAccessor = accessors.at(value);
+					continue;
 				}
 				if (key.compare("TANGENT") == 0)
 				{
 					// value is the accessor that defines the tangents
 					builder.tangentsAccessor = accessors.at(value);
+					continue;
 				}
 				if (key.compare("TEXCOOR_") > 0)
 				{
 					// value is the accessor that defines the Texcoords
-					builder.texCoordsAccessor.emplace(std::stoi(key.substr(8)), accessors.at(value));
+					try
+					{
+						 ind = std::stoi(key.substr(8));
+					}
+					catch (std::exception e){
+						throw e;
+					}
+					builder.texCoordsAccessor.emplace(ind, accessors.at(value));
+					continue;
 				}
 				if (key.compare("COLOR_") > 0)
 				{
 					// value is the accessor that defines the color
-					builder.colorsAccessor.emplace(std::stoi(key.substr(6)), accessors.at(value));
+					try
+					{
+						ind = std::stoi(key.substr(6));
+					}
+					catch (std::exception e) {
+						throw e;
+					}
+					builder.colorsAccessor.emplace(ind, accessors.at(value));
+					continue;
 				}
 				if (key.compare("JOINTS_") > 0)
 				{
 					// value is the accessor that defines the joints
-					builder.jointsAccessor.emplace(std::stoi(key.substr(7)), accessors.at(value));
+					try
+					{
+						ind = std::stoi(key.substr(7));
+					}
+					catch (std::exception e) {
+						throw e;
+					}
+					builder.jointsAccessor.emplace(ind, accessors.at(value));
+					continue;
 				}
 				if (key.compare("WEIGHTS_") > 0)
 				{
 					// value is the accessor that defines the weights
-					builder.weightsAccessor.emplace(std::stoi(key.substr(8)), accessors.at(value));
+					try
+					{
+						ind = std::stoi(key.substr(8));
+					}
+					catch (std::exception e) {
+						throw e;
+					}
+					builder.weightsAccessor.emplace(ind, accessors.at(value));
+					continue;
 				}
 				else {
 					throw std::runtime_error("couldn't parse the attributes");

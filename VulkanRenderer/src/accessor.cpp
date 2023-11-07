@@ -9,9 +9,6 @@ namespace Ld {
 	void Accessor::loadBuffer()
 	{
 
-		VkBufferViewCreateInfo bufferViewCreateInfo{};
-		bufferViewCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
-
 	}
 
 }

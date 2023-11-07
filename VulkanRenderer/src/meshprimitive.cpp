@@ -43,8 +43,7 @@ namespace Ld {
 	
 	MeshPrimitive::MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder) : m_device{ device }
 	{
-		createVertexBuffers(builder.vertices);
-		createIndexBuffers(builder.indices);
+		
 	}
 
 	MeshPrimitive::~MeshPrimitive()

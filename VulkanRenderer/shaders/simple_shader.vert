@@ -1,11 +1,12 @@
 #version 450
 
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec4 vColor;
-layout(location = 2) in vec3 normal;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
 layout(location = 3) in vec2 vTexCoord;
-layout(location = 4) in vec4 a_joint;
-layout(location = 5) in vec4 a_weight;
+layout(location = 4) in vec4 vColor;
+layout(location = 5) in uvec4 a_joint;
+layout(location = 6) in vec4 a_weight;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 texCoord;

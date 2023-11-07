@@ -54,7 +54,7 @@ namespace Ld {
 			void loadVertices();
 			void loadIndices();
 			//std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(Accessor& accessor);
-
+			Buffer* buffer;
 			Accessor* positionsAccessor;
 			Accessor* normalsAccessor;
 			Accessor* tangentsAccessor;
