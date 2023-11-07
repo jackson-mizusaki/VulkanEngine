@@ -19,39 +19,56 @@ namespace Ld {
 	public: // types
 		struct Vertex {
 			bool operator==(const Vertex& other) const {
-				return position == other.position && color == other.color && normal == other.normal && uv == other.uv && texcoord == other.texcoord;
+				return position == other.position &&
+					normal == other.normal &&
+					tangent == other.tangent &&
+					texcoord == other.texcoord &&
+					color == other.color &&
+					joints == other.joints && 
+					weights == other.weights;
 			}
 
 			glm::vec3 position{};
-			glm::vec4 color{};
 			glm::vec3 normal{};
+			glm::vec4 tangent{};
 			glm::vec2 texcoord{};
-			glm::vec2 uv{};
-			glm::vec<4, unsigned short, glm::defaultp> joints{};
+			glm::vec4 color{};
+			glm::vec<4, uint8_t, glm::defaultp> joints{};
 			glm::vec4 weights{};
-			static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
-			static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+			static std::vector<VkVertexInputBindingDescription> getDefaultBindingDescriptions();
+			static std::vector<VkVertexInputAttributeDescription> getDefaultAttributeDescriptions();
 		};
 
 		struct Builder {
-			void loadMeshPrimitive(const Accessor& accessor);
-			void loadVertices(const Accessor& accessor);
-			void loadIndices(const Accessor& accessor);
+			enum RenderingMode {
+				Points,
+				Lines,
+				Line_Loop,
+				Line_Strip,
+				Triangles,
+				Triangle_Strip,
+				Triangle_Fan
+			};
+			//void loadMeshPrimitive(const Accessor& accessor);
+			Builder();
+			void loadVertices();
+			void loadIndices();
+			//std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(Accessor& accessor);
+
+			Accessor* positionsAccessor;
+			Accessor* normalsAccessor;
+			Accessor* tangentsAccessor;
+			std::map<uint32_t, Accessor*> texCoordsAccessor;
+			std::map<uint32_t, Accessor*> colorsAccessor;
+			std::map<uint32_t, Accessor*> jointsAccessor;
+			std::map<uint32_t, Accessor*> weightsAccessor;
+			RenderingMode renderMode = Triangles;
 			std::vector<Vertex> vertices{};
 			std::vector<uint32_t> indices{};
 		};
 
-		enum RenderingMode {
-			Points,
-			Lines,
-			Line_Loop,
-			Line_Strip,
-			Triangles,
-			Triangle_Strip,
-			Triangle_Fan
-		};
+
 	public: // constructors
-		MeshPrimitive(Builder& builder);
 		MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder);
 		~MeshPrimitive();
 
@@ -61,8 +78,8 @@ namespace Ld {
 	public: // functions
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
-
-		static std::unique_ptr<MeshPrimitive> createMeshPrimitiveFromFile(Device& device, const std::string& filepath);
+		VkBuffer getVertexBuffer() { return m_vertexBuffer->getBuffer(); }
+		//static std::unique_ptr<MeshPrimitive> createMeshPrimitiveFromFile(Device& device, const std::string& filepath);
 
 		
 	private:
@@ -71,7 +88,7 @@ namespace Ld {
 
 	public: // data
 	private:
-		RenderingMode mode;
+		Device& m_device;
 		Material* material;
 
 		std::unique_ptr<Buffer> m_vertexBuffer;

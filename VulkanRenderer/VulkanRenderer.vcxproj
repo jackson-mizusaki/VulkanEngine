@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="src\accessor.cpp" />
     <ClCompile Include="src\app.cpp" />
+    <ClCompile Include="src\bone.cpp" />
     <ClCompile Include="src\gltf_importer.cpp" />
     <ClCompile Include="src\image.cpp" />
     <ClCompile Include="src\keyboard_movement_controller.cpp" />
@@ -182,18 +183,17 @@
     <ClCompile Include="src\ld_device.cpp" />
     <ClCompile Include="src\ld_frame_info.hpp" />
     <ClCompile Include="src\ld_game_object.cpp" />
-    <ClCompile Include="src\ld_model.cpp" />
     <ClCompile Include="src\ld_pipeline.cpp" />
     <ClCompile Include="src\ld_renderer.cpp" />
     <ClCompile Include="src\ld_swapchain.cpp" />
     <ClCompile Include="src\ld_texture.cpp" />
     <ClCompile Include="src\ld_window.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\meshprimitive.cpp" />
     <ClCompile Include="src\node.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_node.cpp" />
-    <ClCompile Include="Systems\point_light_system.cpp" />
     <ClCompile Include="Systems\simple_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -214,7 +214,6 @@
     <ClInclude Include="src\ld_descriptors.hpp" />
     <ClInclude Include="src\ld_device.hpp" />
     <ClInclude Include="src\ld_game_object.hpp" />
-    <ClInclude Include="src\ld_model.hpp" />
     <ClInclude Include="src\ld_pipeline.hpp" />
     <ClInclude Include="src\ld_renderer.hpp" />
     <ClInclude Include="src\ld_swapchain.hpp" />
@@ -225,7 +224,6 @@
     <ClInclude Include="src\mesh.hpp" />
     <ClInclude Include="src\scene.hpp" />
     <ClInclude Include="src\skin.hpp" />
-    <ClInclude Include="systems\point_light_system.hpp" />
     <ClInclude Include="Systems\simple_render_system.hpp" />
   </ItemGroup>
   <ItemGroup>

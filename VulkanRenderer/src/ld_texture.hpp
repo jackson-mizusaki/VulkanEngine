@@ -12,11 +12,11 @@ namespace Ld {
 	public: // Types
 		class Sampler {
 		public: // types
-			enum MagnificationFilter {
+			enum class MagnificationFilter {
 				Nearest,
 				Linear
 			};
-			enum MinificationFilter {
+			enum class MinificationFilter {
 				Nearest,
 				Linear,
 				NearestMipMapNearest,

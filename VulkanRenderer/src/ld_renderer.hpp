@@ -3,7 +3,6 @@
 #include "ld_window.hpp"
 #include "ld_device.hpp"
 #include "ld_swapchain.hpp"
-#include "ld_model.hpp"
 
 #include <cassert>
 #include <memory>

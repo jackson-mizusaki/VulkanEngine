@@ -1,8 +1,7 @@
 #pragma once
 
-#include "ld_game_object.hpp"
 #include "ld_window.hpp"
-
+#include "scene_node.hpp"
 
 namespace Ld {
 	class KeyboardMovementController {
@@ -28,7 +27,7 @@ namespace Ld {
 		float lookSpeed{ 1.5f };
 
 	public:
-		void moveInPlaneXZ(GLFWwindow* window, float dt, GameObject &gameObject);
+		void moveInPlaneXZ(GLFWwindow* window, float dt, SceneNode &camera);
 
 	};
 

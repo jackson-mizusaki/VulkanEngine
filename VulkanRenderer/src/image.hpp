@@ -12,7 +12,6 @@ namespace Ld {
 			VkImageCreateInfo& createInfo,
 			VmaAllocationCreateInfo& allocInfo
 		);
-
 		~Image();               // destructor 
 		Image(const Image&) = default;                // copy constructor
 		Image& operator=(const Image&) = default;     // copy assignment
@@ -25,11 +24,12 @@ namespace Ld {
 		void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
 		void copyBufferToImage(Buffer& buffer);
 		VkResult createImageView(VkImageViewCreateInfo& createInfo);
+
 	private:
 		void createImage(VkImageCreateInfo& createInfo, VmaAllocationCreateInfo& allocInfo);
 		//static std::unique_ptr<Image> loadImageFromFile(Device& device, const std::string& filepath);
 		void loadImage(const std::string& filepath);
-
+		
 	public: // data
 	private:
 		Device& m_device;

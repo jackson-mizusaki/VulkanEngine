@@ -1,13 +1,17 @@
 #include "accessor.hpp"
 
 namespace Ld {
-	Accessor::Accessor()
+	Accessor::Accessor(Device& device) : m_device{ device }
 	{
+		VkBufferCreateInfo bufferCreateInfo{};
 	}
 
-
-	Buffer* Accessor::loadBuffer()
+	void Accessor::loadBuffer()
 	{
-		return nullptr;
+
+		VkBufferViewCreateInfo bufferViewCreateInfo{};
+		bufferViewCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+
 	}
+
 }

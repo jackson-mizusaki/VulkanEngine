@@ -1,9 +1,9 @@
 #include "node.hpp"
 
 namespace Ld {
-	void TransformComponent::setTransform(std::vector<float> flatMat)
+	void Node::TransformComponent::setTransform(std::vector<float> flatMat)
 	{
-		//
+		// TODO finish this
 		assert(flatMat.size() == 16);
 		translation = glm::vec3(flatMat[12], flatMat[13], flatMat[14]);
 		scale.x = glm::length(glm::vec3(flatMat[0], flatMat[1], flatMat[2])); // Basis vector X
@@ -14,11 +14,11 @@ namespace Ld {
 		switch (rotationType)
 		{
 		case TaitBryan:
-
+			break;
 		}
 	}
 
-	glm::mat4 TransformComponent::mat4()
+	glm::mat4 Node::TransformComponent::mat4()
 	{
 
 		const float c3 = glm::cos(rotation.z);
@@ -50,7 +50,7 @@ namespace Ld {
 		};
 	}
 
-	glm::mat3 TransformComponent::normalMatrix()
+	glm::mat3 Node::TransformComponent::normalMatrix()
 	{
 		const float c3 = glm::cos(rotation.z);
 		const float s3 = glm::sin(rotation.z);

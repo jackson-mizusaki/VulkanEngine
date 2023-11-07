@@ -30,48 +30,24 @@ namespace Ld {
 			Unsigned_Int,
 			Float
 		};
-		class Sparse {
-		public: // types
-			class Index {
-			public: // types
-				enum ComponentType {
-					Unsigned_Byte,
-					Unsigned_Short,
-					Unsigned_Int
-				};
-				uint32_t bufferViewIndex;
-				uint32_t byteOffset;
-				ComponentType componentType;
-				//json extensions;
-				//json extras;
-			};
-			class Value {
-				uint32_t bufferViewIndex;
-				uint32_t byteOffset;
-				//json extensions;
-				//json extras;
-			};
-		public: // data
-			uint32_t count;
-			std::vector<Index> indicies;
-			std::vector<Value> values;
-			//json extensions;
-			//json extras;
-		};
-
+		// todo figure out sparse accessors
 	public: // constructors
-		Accessor();
+		//Accessor();
+		Accessor(Device& device);
 	public: // functions
-		Buffer* loadBuffer();
+		void loadBuffer();
 	public: // data
-		uint32_t bufferViewIndex;
+		Device& m_device;
+		Buffer* buffer = nullptr;
+		uint32_t binding = 0;
+		VkBufferView bufferView;
 		uint32_t byteOffset = 0;
 		std::vector<float> Maxes;
 		std::vector<float> Mins;
-		ComponentType componentType;
+		ComponentType componentType = Byte;
 		bool isNormalized = false;
-		uint32_t count;
-		Type accessorType;
+		uint32_t count = 0;
+		Type accessorType = Scalar;
 
 	};
 }

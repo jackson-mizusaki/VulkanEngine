@@ -2,6 +2,7 @@
 
 #include "ld_camera.hpp"
 #include "animation.hpp"
+#include "node.hpp"
 #include "scene_node.hpp"
 
 
@@ -15,7 +16,7 @@ using json = nlohmann::json;
 
 
 namespace Ld {
-	class Scene {
+	class Scene : public Node {
 	public:	// types
 
 
@@ -28,13 +29,14 @@ namespace Ld {
 		Scene(Scene&&) noexcept = default;            // move constructor
 		Scene& operator=(Scene&&) noexcept = default; // move assignment
  
+		bool findCameraNode(SceneNode& cameraNode);
 	public: // functions
-		void loadScene(const std::string& filepath);
-
+		// void loadScene(const std::string& filepath);
+		void render(VkCommandBuffer);
 	public: // data
-		std::vector<SceneNode> nodes;
+		std::vector<SceneNode*> nodes;
 		std::string name;
-		json extensions;
-		json extras;
+		//json extensions;
+		//json extras;
 	};
 }

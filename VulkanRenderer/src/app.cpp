@@ -6,6 +6,7 @@
 #include "systems/point_light_system.hpp"
 #include "ld_buffer.hpp"
 #include "ld_texture.hpp"
+#include "gltf_importer.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -24,7 +25,7 @@ namespace Ld {
 			.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::s_maxFramesInFlight)
 			.build();
 
-		loadGameObjects();
+		//loadGameObjects();
 	}
 
 	App::~App()
@@ -74,11 +75,16 @@ namespace Ld {
 		}
 
 		SimpleRenderSystem simpleRenderSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
-		PointLightSystem pointLightSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
-		Camera camera{};
+		//PointLightSystem pointLightSystem{ m_device, m_renderer.getSwapChainRenderPass() , globalSetLayout->getDescriptorSetLayout() };
+		
 
-		auto viewerObject = GameObject::createGameObject();
-		viewerObject.transform.translation.z = -2.5f;
+		GlTFImporter importer(m_device, std::string("models/sample.gltf"), scenes);
+		SceneNode cameraNode;
+		Camera camera;
+		if (scenes[0].findCameraNode(cameraNode)) {
+			camera = *cameraNode.camera;
+		}
+		cameraNode.transform.translation.z = -2.5f;
 		KeyboardMovementController cameraController{};
 
 		auto currentTime = std::chrono::high_resolution_clock::now();
@@ -90,8 +96,8 @@ namespace Ld {
 			float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
 			currentTime = newTime;
 
-			cameraController.moveInPlaneXZ(m_window.getGLFWwindow(), frameTime, viewerObject);
-			camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+			cameraController.moveInPlaneXZ(m_window.getGLFWwindow(), frameTime, cameraNode);
+			camera.setViewYXZ(cameraNode.transform.translation, cameraNode.transform.rotation);
 
 			float aspect = m_renderer.getAspectRatio();
 			camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 100.f);
@@ -106,14 +112,14 @@ namespace Ld {
 					commandBuffer,
 					camera,
 					globalDescriptorSets[frameIndex],
-					m_gameObjects
+					scenes[m_defaultScene]
 				};
 				// update objects in memory
 				GlobalUBO ubo{};
 				ubo.projection = camera.getProjection();
 				ubo.view = camera.getView();
 				ubo.inverseView = camera.getInverseView();
-				pointLightSystem.update(frameInfo, ubo);
+				//pointLightSystem.update(frameInfo, ubo);
 				uboBuffers[frameIndex]->writeToBuffer(&ubo);
 				uboBuffers[frameIndex]->flush();
 
@@ -122,7 +128,7 @@ namespace Ld {
 				m_renderer.beginSwapChainRenderPass(commandBuffer);
 				
 				simpleRenderSystem.renderGameObjects(frameInfo);
-				pointLightSystem.render(frameInfo);
+				//pointLightSystem.render(frameInfo);
 				
 				m_renderer.endSwapChainRenderPass(commandBuffer);
 				m_renderer.endFrame();
@@ -136,51 +142,51 @@ namespace Ld {
 		scenes.push_back(scene);
 	}
 
-	void App::loadGameObjects()
-	{
-		std::shared_ptr<Model> ldModel = Model::createModelFromFile(m_device, "models/flat_vase.obj");
-		auto flatVase = GameObject::createGameObject();
-		flatVase.model = ldModel;
-		flatVase.transform.translation = { -.5f, .5f, 0.f };
-		flatVase.transform.scale = { 3.f,1.5f, 3.f };
-		m_gameObjects.emplace(flatVase.getId(), std::move(flatVase));
+	//void App::loadGameObjects()
+	//{
+	//	std::shared_ptr<Model> ldModel = Model::createModelFromFile(m_device, "models/flat_vase.obj");
+	//	auto flatVase = GameObject::createGameObject();
+	//	flatVase.model = ldModel;
+	//	flatVase.transform.translation = { -.5f, .5f, 0.f };
+	//	flatVase.transform.scale = { 3.f,1.5f, 3.f };
+	//	m_gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
-		ldModel = Model::createModelFromFile(m_device, "models/smooth_vase.obj");
-		auto smoothVase = GameObject::createGameObject();
-		smoothVase.model = ldModel;
-		smoothVase.transform.translation = { .5f, .5f, 0.f };
-		smoothVase.transform.scale = { 3.f,1.5f, 3.f };
-		m_gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
+	//	ldModel = Model::createModelFromFile(m_device, "models/smooth_vase.obj");
+	//	auto smoothVase = GameObject::createGameObject();
+	//	smoothVase.model = ldModel;
+	//	smoothVase.transform.translation = { .5f, .5f, 0.f };
+	//	smoothVase.transform.scale = { 3.f,1.5f, 3.f };
+	//	m_gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
 
-		ldModel = Model::createModelFromFile(m_device, "models/quad.obj");
-		auto floor = GameObject::createGameObject();
-		floor.model = ldModel;
-		floor.transform.translation = { 0.f, .5f, 0.f };
-		floor.transform.scale = { 3.f,1.f, 3.f };
-		m_gameObjects.emplace(floor.getId(), std::move(floor));
+	//	ldModel = Model::createModelFromFile(m_device, "models/quad.obj");
+	//	auto floor = GameObject::createGameObject();
+	//	floor.model = ldModel;
+	//	floor.transform.translation = { 0.f, .5f, 0.f };
+	//	floor.transform.scale = { 3.f,1.f, 3.f };
+	//	m_gameObjects.emplace(floor.getId(), std::move(floor));
 
-		std::vector<glm::vec3> lightColors{
-			 {1.f, .1f, .1f},
-			 {.1f, .1f, 1.f},
-			 {.1f, 1.f, .1f},
-			 {1.f, 1.f, .1f},
-			 {.1f, 1.f, 1.f},
-			 {1.f, 1.f, 1.f}  //
-		};
+	//	std::vector<glm::vec3> lightColors{
+	//		 {1.f, .1f, .1f},
+	//		 {.1f, .1f, 1.f},
+	//		 {.1f, 1.f, .1f},
+	//		 {1.f, 1.f, .1f},
+	//		 {.1f, 1.f, 1.f},
+	//		 {1.f, 1.f, 1.f}  //
+	//	};
 
-		for (int i = 0; i < lightColors.size(); i++)
-		{
-			auto pointLight = GameObject::makePointLight(0.2f);
-			pointLight.color = lightColors[i];
-			auto rotateLight = glm::rotate(
-				glm::mat4(1.f),
-				(i * glm::two_pi<float>()) / lightColors.size(),
-				{ 0.f, -1.f, 0.f }
-			);
-			pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
-			m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
-		}
+	//	for (int i = 0; i < lightColors.size(); i++)
+	//	{
+	//		auto pointLight = GameObject::makePointLight(0.2f);
+	//		pointLight.color = lightColors[i];
+	//		auto rotateLight = glm::rotate(
+	//			glm::mat4(1.f),
+	//			(i * glm::two_pi<float>()) / lightColors.size(),
+	//			{ 0.f, -1.f, 0.f }
+	//		);
+	//		pointLight.transform.translation = glm::vec3(rotateLight * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+	//		m_gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+	//	}
 
-		std::unique_ptr<Texture> texture = Texture::createTextureFromFile(m_device, "textures/texture.jpg");
-	}
+	//	std::unique_ptr<Texture> texture = Texture::createTextureFromFile(m_device, "textures/texture.jpg");
+	//}
 }

@@ -15,7 +15,7 @@ namespace std {
 	struct hash<Ld::Model::Vertex> {
 		size_t operator()(Ld::Model::Vertex const& vertex) const {
 			size_t seed = 0;
-			Ld::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv);
+			Ld::hashCombine(seed, vertex.position, vertex.color, vertex.normal, vertex.uv, vertex.joints, vertex.weights);
 			return seed;
 		}
 	};

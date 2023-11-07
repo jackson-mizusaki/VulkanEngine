@@ -31,7 +31,7 @@ namespace Ld {
 		};
 
 		struct Builder {
-			void loadModel(const std::string& filepath);
+			//void loadModel(const std::string& filepath);
 
 			std::vector<Vertex> vertices{};
 			std::vector<uint32_t> indices{};

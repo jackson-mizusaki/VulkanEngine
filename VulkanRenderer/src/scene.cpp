@@ -13,15 +13,22 @@ namespace Ld {
 	
 	Scene::Scene(std::string& filepath)
 	{
-		loadScene(filepath);
+		//loadScene(filepath);
 	}
 
-	void Scene::loadScene(const std::string& filepath)
+	bool Scene::findCameraNode(SceneNode& cameraNode)
 	{
-		// iterate through objects saved in scene file
-		std::ifstream f(filepath.c_str());
+		for (auto& node : nodes) {
+			return node->findCamera(cameraNode);
+		 }
+		return false;
+	}
 
-
+	void Scene::render(VkCommandBuffer commandBuffer)
+	{
+		for (auto& node : nodes) {
+			node->render(commandBuffer);
+		}
 	}
 
 }

@@ -1,5 +1,5 @@
 #include "ld_pipeline.hpp"
-#include "ld_model.hpp"
+#include "meshprimitive.hpp"
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -95,8 +95,8 @@ namespace Ld {
 		configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
 		configInfo.dynamicStateInfo.flags = 0;
 
-		configInfo.bindingDescriptions = Model::Vertex::getBindingDescriptions();
-		configInfo.attributeDescriptions = Model::Vertex::getAttributeDescriptions();
+		configInfo.bindingDescriptions = MeshPrimitive::Vertex::getDefaultBindingDescriptions();
+		configInfo.attributeDescriptions = MeshPrimitive::Vertex::getDefaultAttributeDescriptions();
 	}
 
 	void Pipeline::enableAlphaBlending(PipelineConfigInfo& configInfo)

@@ -1,6 +1,6 @@
 #pragma once  
 
-#include "ld_model.hpp"
+#include "meshprimitive.hpp"
 
 #include <json.hpp>
 
@@ -12,8 +12,10 @@ using json = nlohmann::json;
 
 namespace Ld {
 	class Mesh {
-	public:
-		std::vector<Model> primitives;
+	public: // functiosn
+		void render(VkCommandBuffer commandBuffer);
+	public: // data
+		std::vector<MeshPrimitive> primitives;
 		int morphTargetCount = 0;
 	};
 }

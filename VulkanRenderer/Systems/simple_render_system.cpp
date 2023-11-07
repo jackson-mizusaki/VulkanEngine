@@ -72,19 +72,20 @@ namespace Ld {
 
 		vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
 
-		for (auto& kv : frameInfo.gameObjects)
-		{
-			auto& obj = kv.second;
-			if (obj.model == nullptr) continue; // skip rendering anything without models. additional systems can filter for their own render passes.
-			SimplePushConstantData push{};
-			auto modelMatrix = obj.transform.mat4();
-			push.modelMatrix = obj.transform.mat4();
-			push.normalMatrix = obj.transform.normalMatrix();
-			vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
+		//for (auto& kv : frameInfo.gameObjects)
+		//{
+		//	auto& obj = kv.second;
+		//	if (obj.model == nullptr) continue; // skip rendering anything without models. additional systems can filter for their own render passes.
+		//	SimplePushConstantData push{};
+		//	auto modelMatrix = obj.transform.mat4();
+		//	push.modelMatrix = obj.transform.mat4();
+		//	push.normalMatrix = obj.transform.normalMatrix();
+		//	vkCmdPushConstants(frameInfo.commandBuffer, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
 
-			obj.model->bind(frameInfo.commandBuffer);
-			obj.model->draw(frameInfo.commandBuffer);
-		}
+		//	obj.model->bind(frameInfo.commandBuffer);
+		//	obj.model->draw(frameInfo.commandBuffer);
+		//}
+		frameInfo.scene.render(frameInfo.commandBuffer);
 	}
 
 }

@@ -289,7 +289,7 @@ namespace nlohmann
 			j = json::array({ value.x, value.y, value.z, value.w });
 		}
 
-		static void from_json(const json& j, vec& value)
+		static void from_json(const json& j, quat& value)
 		{
 			switch (j.type())
 			{
@@ -298,7 +298,7 @@ namespace nlohmann
 			case json::value_t::number_float:
 			{
 				T v = j;
-				value = vec(v, v, v, v);
+				value = quat(v, v, v, v);
 				return;
 			}
 			case json::value_t::array:
