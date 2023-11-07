@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ld_buffer.hpp"
+#include "gltf_importer.hpp"
 
 #include <json.hpp>
 
@@ -13,32 +14,16 @@ using json = nlohmann::json;
 namespace Ld {
 	class Accessor {
 	public: // Types
-		enum Type {
-			Scalar,
-			Vec2,
-			Vec3,
-			Vec4,
-			Mat2,
-			Mat3,
-			Mat4
-		};
-		enum ComponentType {
-			Byte,
-			Unsigned_Byte,
-			Short,
-			Unsigned_Short,
-			Unsigned_Int,
-			Float
-		};
+
 		// todo figure out sparse accessors
 	public: // constructors
 		//Accessor();
 		Accessor(Device& device);
 	public: // functions
-		void loadBuffer();
+		void loadBuffer(const std::vector<uint8_t>& data, VkDeviceSize size);
 	public: // data
 		Device& m_device;
-		Buffer* buffer = nullptr;
+		uint32_t bufferViewIndex;
 		uint32_t binding = 0;
 		uint32_t byteOffset = 0;
 		std::vector<float> maxes;

@@ -1,7 +1,6 @@
 #pragma once 
 
 #include "app.hpp"
-#include "accessor.hpp"
 #include "scene.hpp"
 #include "material.hpp"
 #include "animation.hpp"
@@ -20,6 +19,7 @@ using json = nlohmann::json;
 namespace Ld {
 	class GlTFImporter {
 	public: // types
+		
 		// Buffer Data types need to be passed into structs first before accessors can work with them
 		struct GlTFBuffer {
 			std::string uri;
@@ -36,13 +36,39 @@ namespace Ld {
 			};
 			uint32_t bufferIndex;
 			uint32_t byteOffset = 0;
-			uint32_t byteLength;
+			VkDeviceSize byteLength;
 			uint32_t byteStride;
 			BufferViewTarget target;
 			std::string name;
 			//json extensions
 			//json extras
 		};		
+		struct GlTFAccessor {
+			enum Type {
+				Scalar,
+				Vec2,
+				Vec3,
+				Vec4,
+				Mat2,
+				Mat3,
+				Mat4
+			};
+			enum ComponentType {
+				Byte,
+				Unsigned_Byte,
+				Short,
+				Unsigned_Short,
+				Unsigned_Int,
+				Float
+			};
+			ComponentType componentType;
+			Type accessorType;
+			std::vector<float> maxes;
+			std::vector<float> mins;
+			uint32_t bufferViewIndex;
+			uint32_t byteOffset;
+			uint32_t count;
+		};
 		struct GlTFImage {
 			std::string uri;
 			GlTFBufferView* bufferView;
@@ -58,7 +84,6 @@ namespace Ld {
 			//json extensions
 			//json extras
 		};
-
 	public: // constructors
 		GlTFImporter(Device &device, const std::string& filepath, std::vector<Scene>& scenes);
 	public: // functions
@@ -67,7 +92,7 @@ namespace Ld {
 		void loadBuffer(GlTFBuffer & buffer, json bufferDatas);
 		void loadBufferView(GlTFBufferView& bufferView, json bufferViewData);
 		void loadImage(GlTFImage& image, json imageData);
-		void loadAccessor(Accessor& accessor, json accessorData);
+		void loadAccessor(GlTFAccessor& accessor, json accessorData);
 		void loadSceneNode(SceneNode& sceneNode, json nodeData, uint32_t i);
 		void loadCamera(Camera& camera, json cameraData);
 		void loadMesh(Mesh& mesh, json meshData);
@@ -83,10 +108,10 @@ namespace Ld {
 		std::vector<Camera*> cameras;
 		std::vector<Skin*> skins;
 		std::vector<Mesh*> meshes;
-		std::vector<Accessor*> accessors;
+		std::vector<GlTFAccessor*> accessors;
 		std::vector<GlTFImage*> images;
 		std::vector<Texture::Sampler*> samplers;
-		std::vector<GlTFBuffer*> buffers;
+		std::vector<GlTFBuffer> buffers;
 		std::vector<GlTFBufferView*> bufferViews;
 	};
 }

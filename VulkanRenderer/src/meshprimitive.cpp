@@ -31,19 +31,116 @@ namespace Ld {
 	{
 	}
 
-	void MeshPrimitive::Builder::loadIndices()
+	bool MeshPrimitive::Builder::updateOrCheckCount(uint32_t count)
 	{
+		// update the attributecount if it is zero
+		// otherwise check if it is the same as the attribute count
+		// returns true if we update the count for the first time
+		// or if the counts are already equal
+		// otherwise return false
+		if (attributeCount == 0 && count > 0)
+		{
+			attributeCount = count;
+			return true;
+		}
+		else if (attributeCount == count)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	const uint8_t* MeshPrimitive::Builder::getData(int accessorId) const
+	{
+		return (accessorData.count(accessorId) > 0) ? accessorData.at(accessorId).data() : nullptr;
 	}
 
 
-	void MeshPrimitive::Builder::loadVertices()
-	{
-
-	}	
-	
 	MeshPrimitive::MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder) : m_device{ device }
 	{
-		
+		VkBufferCreateInfo bufferCreateInfo{};
+
+		const float* positionBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kPosition));
+		const float* normalsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kNormal));
+		const float* tangentsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kTangent));
+		const float* texCoordsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kTexCoord));
+		const float* colorBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kColor));
+		const unsigned short* jointsBuffer = reinterpret_cast<const unsigned short*>(builder.getData(Builder::kJoints));
+		const float* weightsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kWeights));
+
+		std::vector<Vertex> vertices{};
+		std::vector<uint32_t> indices{};
+		if (!builder.accessorData.empty())
+		{
+			m_vertexCount = builder.vertexCount;
+			std::vector<uint8_t> data;
+
+			for (size_t i = 0; i < m_vertexCount; i++)
+			{
+				Vertex vert{};
+				if (positionBuffer != nullptr)
+					vert.position = glm::vec3(positionBuffer[i * 3]);
+				if (normalsBuffer != nullptr)
+					vert.normal = glm::vec3(normalsBuffer[i * 3]);
+				if (tangentsBuffer != nullptr)
+					vert.tangent = glm::vec4(tangentsBuffer[i * 4]);
+				if (texCoordsBuffer != nullptr)
+					vert.texcoord = glm::vec2(texCoordsBuffer[i * 2]);
+				if (colorBuffer != nullptr)
+				{
+					if (builder.colorSize == 3)
+					{
+
+						vert.color = glm::vec4(glm::vec3(colorBuffer[i * 3]), 1.f);
+					}
+					else
+					{
+						vert.color = glm::vec4(colorBuffer[i * 4]);
+					}
+				}
+				if (jointsBuffer != nullptr)
+					vert.joints = glm::vec4(jointsBuffer[i * 4]);
+				if (weightsBuffer != nullptr)
+					vert.weights = glm::vec4(weightsBuffer[i * 4]);
+
+				vertices.push_back(vert);
+			}
+		}
+		if (builder.indexCount > 0)
+		{
+			switch (builder.indexType) {
+			case Builder::IndexType::unsigned_Int:
+			{
+				const uint32_t* indicesBuffer = reinterpret_cast<const uint32_t*>(builder.getData(Builder::kIndices));
+				for (size_t i = 0; i < m_indexCount; i++) 
+				{
+					indices.push_back(indicesBuffer[i]);
+				}
+			}
+			break;
+			case Builder::IndexType::unsigned_Short:
+			{
+				const uint16_t* indicesBuffer = reinterpret_cast<const uint16_t*>(builder.getData(Builder::kIndices));
+				for (size_t i = 0; i < m_indexCount; i++)
+				{
+					indices.push_back(indicesBuffer[i]);
+				}
+				break;
+			}
+			case Builder::IndexType::unsigned_Byte:
+			{
+				const uint8_t* indicesBuffer = reinterpret_cast<const uint8_t*>(builder.getData(Builder::kIndices));
+				for (size_t i = 0; i < m_indexCount; i++)
+				{
+					indices.push_back(indicesBuffer[i]);
+				}
+				break;
+			}
+			default:
+				throw std::runtime_error("index type not supported");
+			}
+			m_indexCount = indices.size();
+		}
 	}
 
 	MeshPrimitive::~MeshPrimitive()
@@ -51,11 +148,11 @@ namespace Ld {
 	}
 
 
+
 	void MeshPrimitive::bind(VkCommandBuffer commandBuffer)
 	{
 		VkBuffer buffers[] = { m_vertexBuffer->getBuffer() };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets.data());
 		if (m_hasIndexBuffer)
 		{
 			// optimize for smaller models?
@@ -109,6 +206,7 @@ namespace Ld {
 		vertexAllocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		vertexAllocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 		vertexAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT;
+
 
 		m_vertexBuffer = std::make_unique<Buffer>(
 			m_device,

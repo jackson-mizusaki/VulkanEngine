@@ -24,7 +24,7 @@ namespace Ld {
 			{
 				GlTFBuffer buffer;
 				loadBuffer(buffer, bufferData);
-				buffers.push_back(&buffer);
+				buffers.push_back(buffer);
 			}
 		}
 		if (j.contains("bufferViews"))
@@ -49,7 +49,7 @@ namespace Ld {
 		{
 			for (json accessorData : j["accessors"])
 			{
-				Accessor accessor{ m_device };
+				GlTFAccessor accessor;
 				loadAccessor(accessor, accessorData);
 				accessors.push_back(&accessor);
 			}
@@ -184,7 +184,12 @@ namespace Ld {
 		{
 			throw std::runtime_error("Buffer Views properties are not valid!");
 		}
-		bufferView.bufferIndex = bufferViewData.at("buffer");
+		uint32_t bufferIndex = bufferViewData.at("buffer");
+		if (bufferIndex > buffers.size())
+		{
+			throw std::runtime_error("buffer index for this bufferview is out of range");
+		}
+		bufferView.bufferIndex = bufferIndex;
 		if (bufferViewData.contains("byteOffset"))
 		{
 			bufferView.byteOffset = bufferViewData.at("byteOffset");
@@ -237,16 +242,13 @@ namespace Ld {
 
 	}
 
-	void GlTFImporter::loadAccessor(Accessor& accessor, json accessorData)
+	void GlTFImporter::loadAccessor(GlTFAccessor& accessor, json accessorData)
 	{
 		if (!accessorData.contains("componentType") || !accessorData.contains("count") || !accessorData.contains("type"))
 		{
 			throw std::runtime_error("Accessor is missing required properties.");
 		}
-		if (accessorData.contains("bufferView"))
-		{
-			GlTFBufferView* bufferView = bufferViews.at(accessorData.at("bufferView"));
-		}
+
 		accessor.count = accessorData.at("count");
 		if (accessorData.contains("sparse"))
 		{
@@ -257,27 +259,27 @@ namespace Ld {
 		switch (componentType)
 		{
 		case 5120: // byte
-			accessor.componentType = Ld::Accessor::ComponentType::Byte;
+			accessor.componentType = GlTFAccessor::ComponentType::Byte;
 			byteSize = 1;
 			break;
 		case 5121: // unsigned_byte
-			accessor.componentType = Ld::Accessor::ComponentType::Unsigned_Byte;
+			accessor.componentType = GlTFAccessor::ComponentType::Unsigned_Byte;
 			byteSize = 1;
 			break;
 		case 5122: // short
-			accessor.componentType = Ld::Accessor::ComponentType::Short;
+			accessor.componentType = GlTFAccessor::ComponentType::Short;
 			byteSize = 2;
 			break;
 		case 5123: // unsigned_short
-			accessor.componentType = Ld::Accessor::ComponentType::Unsigned_Short;
+			accessor.componentType = GlTFAccessor::ComponentType::Unsigned_Short;
 			byteSize = 2;
 			break;
 		case 5125: // unsigned_int
-			accessor.componentType = Ld::Accessor::ComponentType::Unsigned_Int;
+			accessor.componentType = GlTFAccessor::ComponentType::Unsigned_Int;
 			byteSize = 4;
 			break;
 		case 5126: // float
-			accessor.componentType = Ld::Accessor::ComponentType::Float;
+			accessor.componentType = GlTFAccessor::ComponentType::Float;
 			byteSize = 4;
 			break;
 		default:
@@ -288,37 +290,37 @@ namespace Ld {
 		int componentCount = 0;
 		if (type == "SCALAR")
 		{
-			accessor.accessorType = Accessor::Type::Scalar;
+			accessor.accessorType = GlTFAccessor::Type::Scalar;
 			componentCount = 1;
 		}
 		else if (type == "VEC2")
 		{
-			accessor.accessorType = Accessor::Type::Vec2;
+			accessor.accessorType = GlTFAccessor::Type::Vec2;
 			componentCount = 2;
 		}
 		else if (type == "VEC3")
 		{
-			accessor.accessorType = Accessor::Type::Vec3;
+			accessor.accessorType = GlTFAccessor::Type::Vec3;
 			componentCount = 3;
 		}
 		else if (type == "VEC4")
 		{
-			accessor.accessorType = Accessor::Type::Vec4;
+			accessor.accessorType = GlTFAccessor::Type::Vec4;
 			componentCount = 4;
 		}
 		else if (type == "MAT2")
 		{
-			accessor.accessorType = Accessor::Type::Mat2;
+			accessor.accessorType = GlTFAccessor::Type::Mat2;
 			componentCount = 4;
 		}
 		else if (type == "MAT3")
 		{
-			accessor.accessorType = Accessor::Type::Mat3;
+			accessor.accessorType = GlTFAccessor::Type::Mat3;
 			componentCount = 9;
 		}
 		else if (type == "MAT4")
 		{
-			accessor.accessorType = Accessor::Type::Mat4;
+			accessor.accessorType = GlTFAccessor::Type::Mat4;
 			componentCount = 16;
 		}
 		else {
@@ -345,7 +347,15 @@ namespace Ld {
 			accessor.byteOffset = accessorData.at("byteOffset");
 		}
 		elementSize = byteSize * componentCount;
-		// now 
+		// now get the buffer
+		// this is technically the staging buffer. when the actual object (mesh or whatever) is created,
+		// we copy this into the GPU
+		GlTFBufferView* bufferView = nullptr;
+		if (accessorData.contains("bufferView"))
+		{
+			accessor.bufferViewIndex = accessorData.at("bufferView");
+		}
+
 	}
 
 
@@ -367,19 +377,26 @@ namespace Ld {
 				if (key.compare("POSITION") == 0)
 				{
 					// value is the accessor that defines the vertices
-					builder.positionsAccessor = accessors.at(value);
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(Builder::kPosition, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					builder.vertexCount = accessor.count;
 					continue;
 				}
 				if (key.compare("NORMAL") == 0)
 				{
 					// value is the accessor that defines the normals
-					builder.normalsAccessor = accessors.at(value);
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(Builder::kNormal, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				if (key.compare("TANGENT") == 0)
 				{
 					// value is the accessor that defines the tangents
-					builder.tangentsAccessor = accessors.at(value);
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(Builder::kTangent, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				if (key.compare("TEXCOOR_") > 0)
@@ -392,7 +409,9 @@ namespace Ld {
 					catch (std::exception e){
 						throw e;
 					}
-					builder.texCoordsAccessor.emplace(ind, accessors.at(value));
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(Builder::kTexCoord, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				if (key.compare("COLOR_") > 0)
@@ -405,7 +424,20 @@ namespace Ld {
 					catch (std::exception e) {
 						throw e;
 					}
-					builder.colorsAccessor.emplace(ind, accessors.at(value));
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					switch (accessor.accessorType)
+					{
+					case GlTFAccessor::Type::Vec3:
+						builder.colorSize = 3;
+						break;
+					case GlTFAccessor::Type::Vec4:
+						builder.colorSize = 4;
+						break;
+					default:
+						throw std::runtime_error("Color size is invalid");
+					}
+					builder.accessorData.emplace(Builder::kColor, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				if (key.compare("JOINTS_") > 0)
@@ -418,7 +450,9 @@ namespace Ld {
 					catch (std::exception e) {
 						throw e;
 					}
-					builder.jointsAccessor.emplace(ind, accessors.at(value));
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(Builder::kJoints, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				if (key.compare("WEIGHTS_") > 0)
@@ -431,11 +465,17 @@ namespace Ld {
 					catch (std::exception e) {
 						throw e;
 					}
-					builder.weightsAccessor.emplace(ind, accessors.at(value));
+					const GlTFAccessor& accessor = *accessors.at(value);
+					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(Builder::kWeights, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				else {
 					throw std::runtime_error("couldn't parse the attributes");
+				}
+				if (!builder.updateOrCheckCount(accessors.at(value)->count))
+				{
+					throw std::runtime_error("some accessors have a different count");
 				}
 			}
 			// get the material
@@ -466,11 +506,13 @@ namespace Ld {
 					break;
 				}
 			}
+			
 			if (primData.contains("indices")) {
-				builder.loadIndices();
+				const GlTFAccessor& accessor = *accessors.at(primData.at("indices"));
+				builder.indexCount = accessor.count;
+				const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+				builder.accessorData.emplace(Builder::kIndices, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 			}
-			builder.loadVertices();
-
 			// using the accessor load the mesh primitive data
 
 			// create the Mesh Primitive

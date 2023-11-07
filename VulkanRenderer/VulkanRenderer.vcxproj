@@ -170,7 +170,6 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\accessor.cpp" />
     <ClCompile Include="src\app.cpp" />
     <ClCompile Include="src\bone.cpp" />
     <ClCompile Include="src\gltf_importer.cpp" />
@@ -202,7 +201,6 @@
     <ClInclude Include="src\meshprimitive.hpp" />
     <ClInclude Include="src\node.hpp" />
     <ClInclude Include="src\scene_node.hpp" />
-    <ClInclude Include="src\accessor.hpp" />
     <ClInclude Include="src\animation.hpp" />
     <ClInclude Include="src\app.hpp" />
     <ClInclude Include="src\gltf_importer.hpp" />

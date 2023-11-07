@@ -1,7 +1,6 @@
 #pragma once 
 
 #include "ld_buffer.hpp"
-#include "accessor.hpp"
 #include "material.hpp"
 
 #define GLM_FORCE_RADIANS
@@ -24,7 +23,7 @@ namespace Ld {
 					tangent == other.tangent &&
 					texcoord == other.texcoord &&
 					color == other.color &&
-					joints == other.joints && 
+					joints == other.joints &&
 					weights == other.weights;
 			}
 
@@ -49,22 +48,30 @@ namespace Ld {
 				Triangle_Strip,
 				Triangle_Fan
 			};
+			enum IndexType {
+				unsigned_Int,
+				unsigned_Short,
+				unsigned_Byte
+			};
 			//void loadMeshPrimitive(const Accessor& accessor);
 			Builder();
-			void loadVertices();
-			void loadIndices();
-			//std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(Accessor& accessor);
-			Buffer* buffer;
-			Accessor* positionsAccessor;
-			Accessor* normalsAccessor;
-			Accessor* tangentsAccessor;
-			std::map<uint32_t, Accessor*> texCoordsAccessor;
-			std::map<uint32_t, Accessor*> colorsAccessor;
-			std::map<uint32_t, Accessor*> jointsAccessor;
-			std::map<uint32_t, Accessor*> weightsAccessor;
+			bool updateOrCheckCount(uint32_t count);
+			const uint8_t* getData(int accessorId) const;
+			uint32_t vertexCount = 0;
+			uint32_t indexCount = 0;
+			uint32_t attributeCount = 0;
+			uint8_t colorSize = 3;
+			std::map<uint32_t, std::vector<uint8_t>> accessorData;
+			static const int kPosition{ 0 };
+			static const int kNormal{ 1 };
+			static const int kTangent{ 2 };
+			static const int kTexCoord{ 3 };
+			static const int kColor{ 4 };
+			static const int kJoints{ 5 };
+			static const int kWeights{ 6 };
+			static const int kIndices{ 7 };
+			IndexType indexType = unsigned_Int;
 			RenderingMode renderMode = Triangles;
-			std::vector<Vertex> vertices{};
-			std::vector<uint32_t> indices{};
 		};
 
 
@@ -78,10 +85,10 @@ namespace Ld {
 	public: // functions
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
-		VkBuffer getVertexBuffer() { return m_vertexBuffer->getBuffer(); }
+
 		//static std::unique_ptr<MeshPrimitive> createMeshPrimitiveFromFile(Device& device, const std::string& filepath);
 
-		
+
 	private:
 		void createVertexBuffers(const std::vector<Vertex>& vertices);
 		void createIndexBuffers(const std::vector<uint32_t>& indices);
@@ -91,6 +98,7 @@ namespace Ld {
 		Device& m_device;
 		Material* material;
 
+		std::vector<VkDeviceSize> offsets;
 		std::unique_ptr<Buffer> m_vertexBuffer;
 		uint32_t m_vertexCount;
 
