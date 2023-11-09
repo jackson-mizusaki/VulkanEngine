@@ -19,5 +19,3 @@ I have continued development to include an entity component system with a node b
 - [nlohmann/json](https://github.com/nlohmann/json)
 - [VulkanMemoryAllocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)
 - [stb_image.h](https://github.com/nothings/stb/tree/master)
-
-  
