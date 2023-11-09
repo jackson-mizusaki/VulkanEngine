@@ -8,11 +8,14 @@
 
 namespace Ld {
 	GlTFImporter::GlTFImporter(Device& device, const std::string& filepath, std::vector<Scene>& scenes)
-		: m_device{ device }
+		: m_device{ device }, m_filepath{filepath}
 	{
+		size_t trailingSlashPos = filepath.find_last_of("/");
+		m_filepath = filepath.substr(0, trailingSlashPos + 1);
 		std::ifstream f(filepath.c_str());
 		json j;
 		f >> j;
+
 
 		if (!j.contains("asset"))
 		{
@@ -33,7 +36,7 @@ namespace Ld {
 			{
 				GlTFBufferView bufferView;
 				loadBufferView(bufferView, bufferViewData);
-				bufferViews.push_back(&bufferView);
+				bufferViews.push_back(bufferView);
 			}
 		}
 		if (j.contains("images")) 
@@ -42,7 +45,7 @@ namespace Ld {
 			{
 				GlTFImage image;
 				loadImage(image, imageData);
-				images.push_back(&image);
+				images.push_back(image);
 			}
 		}
 		if (j.contains("accessors"))  
@@ -51,16 +54,25 @@ namespace Ld {
 			{
 				GlTFAccessor accessor;
 				loadAccessor(accessor, accessorData);
-				accessors.push_back(&accessor);
+				accessors.push_back(accessor);
 			}
 		}
 		if (j.contains("meshes"))
 		{
+			meshes.resize(j.at("meshes").size());
+			std::vector<Mesh>::iterator it = meshes.begin();
 			for (json meshData : j["meshes"])
 			{
-				Mesh mesh;
+				Mesh mesh(m_device, meshData.at("primitives").size());
 				loadMesh(mesh, meshData);
-				meshes.push_back(&mesh);
+				try 
+				{
+					meshes.insert(++it, mesh);
+				}
+				catch (std::exception e)
+				{
+					throw e;
+				}
 			}
 		}
 		if (j.contains("cameras"))
@@ -69,16 +81,16 @@ namespace Ld {
 			{
 				Camera camera;
 				loadCamera(camera, cameraData);
-				cameras.push_back(&camera);
+				cameras.push_back(camera);
 			}
-		}
 		if (j.contains("skins"))
 		{
+		}
 			for (json skinData : j["skins"])
 			{
 				Skin skin;
 				loadSkin(skin, skinData);
-				skins.push_back(&skin);
+				skins.push_back(skin);
 			}
 		}
 		if (j.contains("nodes"))
@@ -94,14 +106,15 @@ namespace Ld {
 					throw e;
 				}
 				loadSceneNode(newNode, nodeData,index);
-				sceneNodes.push_back(&newNode);
+				sceneNodes.push_back(newNode);
 			}
 		}
 		int defaultScene = 0;
 		if (j.contains("scenes"))
 		{
+			size_t numScenes = j["scenes"].size();
 			if (j.contains("scene")) {
-				if (j["scene"] > j["scenes"].size() - 1)
+				if (j["scene"] > numScenes - 1)
 				{
 					throw std::runtime_error("Default scene index exceeds number of scenes");
 				}
@@ -110,16 +123,24 @@ namespace Ld {
 			Scene newScene{};
 			loadScene(newScene, j.at("scenes")[defaultScene]);
 			scenes.push_back(newScene);
-			j.at("scenes").erase(defaultScene);		
-			for (json s : j["scenes"])
+			if (numScenes > 1)
 			{
-				Scene newScene{};
-				loadScene(newScene, s);
-				scenes.push_back(newScene);
+				j.at("scenes").erase(defaultScene);
+				for (json s : j["scenes"])
+				{
+					Scene newScene{};
+					loadScene(newScene, s);
+					scenes.push_back(newScene);
+				}
+			}
+
+		}		
+		// add children to all scene nodes by accessing the nodeChildren adjacency list
+		for (auto& [parentIndex, children] : nodeChildren) {
+			for (uint32_t childIndex : children) {
+				sceneNodes.at(parentIndex).addChild(&sceneNodes.at(childIndex));
 			}
 		}
-
-
 	}
 	void GlTFImporter::loadBuffer(GlTFBuffer& buffer, json bufferData)
 	{
@@ -132,7 +153,8 @@ namespace Ld {
 		{
 			buffer.name = bufferData.at("name");
 		}
-
+		float i = 1.f;
+		float* iPtr = &i;
 		if (bufferData.contains("uri"))
 		{
 			std::string URI = bufferData.at("uri");
@@ -156,7 +178,7 @@ namespace Ld {
 				else
 				{
 					// read from uri file
-					std::ifstream bin{ URI, std::ios::ate | std::ios::binary };
+					std::ifstream bin{ m_filepath + URI, std::ios::ate | std::ios::binary };
 
 					if (!bin.is_open())
 					{
@@ -232,7 +254,7 @@ namespace Ld {
 			{
 				throw std::runtime_error("mimeType must be specified when bufferview is defined");
 			}
-			image.bufferView = bufferViews.at(imageData.at("bufferView"));
+			image.bufferViewIndex = imageData.at("bufferView");
 			image.mimeType = imageData.at("mimeType");
 		}
 		else {
@@ -250,10 +272,7 @@ namespace Ld {
 		}
 
 		accessor.count = accessorData.at("count");
-		if (accessorData.contains("sparse"))
-		{
-			// do sparse accessor functionality
-		}
+
 		int componentType = accessorData.at("componentType");
 		int byteSize = 0;
 		switch (componentType)
@@ -347,6 +366,10 @@ namespace Ld {
 			accessor.byteOffset = accessorData.at("byteOffset");
 		}
 		elementSize = byteSize * componentCount;
+		if (accessorData.contains("sparse"))
+		{
+			// do sparse accessor functionality
+		}
 		// now get the buffer
 		// this is technically the staging buffer. when the actual object (mesh or whatever) is created,
 		// we copy this into the GPU
@@ -362,6 +385,7 @@ namespace Ld {
 	void GlTFImporter::loadMesh(Mesh& mesh, json meshData)
 	{
 		using Builder = MeshPrimitive::Builder;
+		using AccessorMap = std::map<MeshPrimitive::Attribute, std::vector<uint8_t>>;
 		for (json primData : meshData.at("primitives"))
 		{
 			if (!primData.contains("attributes"))
@@ -369,52 +393,58 @@ namespace Ld {
 				throw std::runtime_error("Primitive does not contain required attributes object");
 			}
 			// for each attribute
-			// create primitive using a MeshPrimtiive Builder
+			// create primitive using a MeshPrimitive Builder
 			MeshPrimitive::Builder builder{ };
 			int ind = 0;
 			for (auto& [key, value] : primData.at("attributes").items())
 			{
-				if (key.compare("POSITION") == 0)
+				if (key.find("POSITION") == 0)
 				{
 					// value is the accessor that defines the vertices
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-					builder.accessorData.emplace(Builder::kPosition, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex); 
+					auto bufferData = &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]);
+					auto emplaceResult = builder.accessorData.emplace(MeshPrimitive::Attribute::Position, bufferData);
+					if (!emplaceResult.second)
+					{
+						throw std::runtime_error("failed to emplace data");
+					}
 					builder.vertexCount = accessor.count;
 					continue;
 				}
-				if (key.compare("NORMAL") == 0)
+				if (key.find("NORMAL") == 0)
 				{
 					// value is the accessor that defines the normals
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-					builder.accessorData.emplace(Builder::kNormal, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(MeshPrimitive::Attribute::Normal, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
-				if (key.compare("TANGENT") == 0)
+				if (key.find("TANGENT") == 0)
 				{
 					// value is the accessor that defines the tangents
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-					builder.accessorData.emplace(Builder::kTangent, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(MeshPrimitive::Attribute::Tangent, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
-				if (key.compare("TEXCOOR_") > 0)
+				if (key.find("TEXCOORD_") == 0)
 				{
 					// value is the accessor that defines the Texcoords
 					try
 					{
-						 ind = std::stoi(key.substr(8));
+						auto substr = key.substr(9);
+						 ind = std::stoi(substr);
 					}
 					catch (std::exception e){
 						throw e;
 					}
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-					builder.accessorData.emplace(Builder::kTexCoord, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(MeshPrimitive::Attribute::TexCoord, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
-				if (key.compare("COLOR_") > 0)
+				if (key.find("COLOR_") == 0)
 				{
 					// value is the accessor that defines the color
 					try
@@ -424,8 +454,8 @@ namespace Ld {
 					catch (std::exception e) {
 						throw e;
 					}
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
 					switch (accessor.accessorType)
 					{
 					case GlTFAccessor::Type::Vec3:
@@ -437,10 +467,10 @@ namespace Ld {
 					default:
 						throw std::runtime_error("Color size is invalid");
 					}
-					builder.accessorData.emplace(Builder::kColor, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					builder.accessorData.emplace(MeshPrimitive::Attribute::Color, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
-				if (key.compare("JOINTS_") > 0)
+				if (key.find("JOINTS_") == 0)
 				{
 					// value is the accessor that defines the joints
 					try
@@ -450,12 +480,12 @@ namespace Ld {
 					catch (std::exception e) {
 						throw e;
 					}
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-					builder.accessorData.emplace(Builder::kJoints, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(MeshPrimitive::Attribute::Joints, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
-				if (key.compare("WEIGHTS_") > 0)
+				if (key.find("WEIGHTS_") == 0)
 				{
 					// value is the accessor that defines the weights
 					try
@@ -465,15 +495,15 @@ namespace Ld {
 					catch (std::exception e) {
 						throw e;
 					}
-					const GlTFAccessor& accessor = *accessors.at(value);
-					const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-					builder.accessorData.emplace(Builder::kWeights, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+					const GlTFAccessor& accessor = accessors.at(value);
+					const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
+					builder.accessorData.emplace(MeshPrimitive::Attribute::Weights, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 					continue;
 				}
 				else {
 					throw std::runtime_error("couldn't parse the attributes");
 				}
-				if (!builder.updateOrCheckCount(accessors.at(value)->count))
+				if (!builder.updateOrCheckCount(accessors.at(value).count))
 				{
 					throw std::runtime_error("some accessors have a different count");
 				}
@@ -508,15 +538,19 @@ namespace Ld {
 			}
 			
 			if (primData.contains("indices")) {
-				const GlTFAccessor& accessor = *accessors.at(primData.at("indices"));
+				const GlTFAccessor& accessor = accessors.at(primData.at("indices"));
 				builder.indexCount = accessor.count;
-				const GlTFBufferView& view = *bufferViews.at(accessor.bufferViewIndex);
-				builder.accessorData.emplace(Builder::kIndices, (buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
+				const GlTFBufferView& view = bufferViews.at(accessor.bufferViewIndex);
+				builder.accessorData.emplace(MeshPrimitive::Attribute::Indices, &(buffers.at(view.bufferIndex).data[accessor.byteOffset + view.byteOffset]));
 			}
 			// using the accessor load the mesh primitive data
 
+			if (meshData.contains("name"))
+			{
+				mesh.name = meshData.at("name");
+			}
 			// create the Mesh Primitive
-			std::unique_ptr<MeshPrimitive> prim = std::make_unique<MeshPrimitive>(m_device, builder);
+			mesh.addPrimitive(builder);
 		}
 	}
 
@@ -557,7 +591,7 @@ namespace Ld {
 			}
 			else
 			{
-				sceneNode.mesh = meshes[meshIndex];
+				sceneNode.mesh = &meshes[meshIndex];
 
 			}
 		}
@@ -571,7 +605,7 @@ namespace Ld {
 			}
 			else
 			{
-				sceneNode.camera = cameras[cameraIndex];
+				sceneNode.camera = &cameras[cameraIndex];
 			}
 		}
 		// attach skin if it exists
@@ -588,8 +622,8 @@ namespace Ld {
 			}
 			else
 			{
-				Skin attachedSkin = *skins[skinIndex];
-				sceneNode.skin = skins[skinIndex];
+				Skin attachedSkin = skins[skinIndex];
+				sceneNode.skin =&attachedSkin;
 			}
 		}
 
@@ -622,10 +656,13 @@ namespace Ld {
 		}
 		if (nodeData.contains("children"))
 		{
-			// this is wrong, could potentially pull out children that haven't been initialized yet
 			std::vector<uint32_t> nodeIndices = nodeData.at("children");
 
 			nodeChildren.emplace(index, nodeIndices);
+		}
+		if (nodeData.contains("name"))
+		{
+			sceneNode.name = nodeData.at("name");
 		}
 	}
 
@@ -636,14 +673,9 @@ namespace Ld {
 			std::vector<uint32_t> nodeIndices = sceneData.at("nodes");
 			for (uint32_t index : nodeIndices)
 			{
-				scene.children.push_back(sceneNodes.at(index));
+				scene.addNode(&sceneNodes.at(index));
 			}
 		}
-		// add children to all scene nodes by accessing the nodeChildren adjacency list
-		for (auto& [parentIndex, children] : nodeChildren) {
-			for (uint32_t childIndex : children) {
-				sceneNodes.at(parentIndex)->children.push_back(sceneNodes.at(childIndex));
-			}
-		}
+
 	}
 }

@@ -81,4 +81,8 @@ namespace Ld {
 	Node::Node()
 	{
 	}
+	void Node::addChild(Node* child)
+	{
+		children.push_back(child);
+	}
 }

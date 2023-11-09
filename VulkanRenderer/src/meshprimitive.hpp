@@ -15,7 +15,17 @@ using json = nlohmann::json;
 
 namespace Ld {
 	class MeshPrimitive {
-	public: // types
+	public: // types		
+		enum Attribute {
+			Position,
+			Normal,
+			Tangent,
+			TexCoord,
+			Color,
+			Joints,
+			Weights,
+			Indices
+		};
 		struct Vertex {
 			bool operator==(const Vertex& other) const {
 				return position == other.position &&
@@ -53,23 +63,24 @@ namespace Ld {
 				unsigned_Short,
 				unsigned_Byte
 			};
+
 			//void loadMeshPrimitive(const Accessor& accessor);
 			Builder();
 			bool updateOrCheckCount(uint32_t count);
-			const uint8_t* getData(int accessorId) const;
+			const uint8_t* getData(Attribute attribute) const;
 			uint32_t vertexCount = 0;
 			uint32_t indexCount = 0;
 			uint32_t attributeCount = 0;
 			uint8_t colorSize = 3;
-			std::map<uint32_t, std::vector<uint8_t>> accessorData;
-			static const int kPosition{ 0 };
-			static const int kNormal{ 1 };
-			static const int kTangent{ 2 };
-			static const int kTexCoord{ 3 };
-			static const int kColor{ 4 };
-			static const int kJoints{ 5 };
-			static const int kWeights{ 6 };
-			static const int kIndices{ 7 };
+			std::map<Attribute, uint8_t*> accessorData;
+			//static const int kPosition{ 0 };
+			//static const int kNormal{ 1 };
+			//static const int kTangent{ 2 };
+			//static const int kTexCoord{ 3 };
+			//static const int kColor{ 4 };
+			//static const int kJoints{ 5 };
+			//static const int kWeights{ 6 };
+			//static const int kIndices{ 7 };
 			IndexType indexType = unsigned_Int;
 			RenderingMode renderMode = Triangles;
 		};
@@ -78,15 +89,16 @@ namespace Ld {
 	public: // constructors
 		MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder);
 		~MeshPrimitive();
-
-		MeshPrimitive(const MeshPrimitive&) = delete;
-		MeshPrimitive& operator=(const MeshPrimitive&) = delete;
+		MeshPrimitive(const MeshPrimitive&) = default;                // copy constructor
+		MeshPrimitive& operator=(const MeshPrimitive&) = default;     // copy assignment
+		MeshPrimitive(MeshPrimitive&&) noexcept = default;            // move constructor
+		MeshPrimitive& operator=(MeshPrimitive&&) noexcept = default; // move assignment
 
 	public: // functions
 		void bind(VkCommandBuffer commandBuffer);
 		void draw(VkCommandBuffer commandBuffer);
 
-		//static std::unique_ptr<MeshPrimitive> createMeshPrimitiveFromFile(Device& device, const std::string& filepath);
+		static std::unique_ptr<MeshPrimitive> createMeshPrimitiveFromBuilder(Device& device, const MeshPrimitive::Builder& builder);
 
 
 	private:
@@ -96,14 +108,14 @@ namespace Ld {
 	public: // data
 	private:
 		Device& m_device;
-		Material* material;
+		Material* material = nullptr;
 
 		std::vector<VkDeviceSize> offsets;
 		std::unique_ptr<Buffer> m_vertexBuffer;
-		uint32_t m_vertexCount;
+		uint32_t m_vertexCount = 0;
 
 		bool m_hasIndexBuffer = false;
 		std::unique_ptr<Buffer> m_indexBuffer;
-		uint32_t m_indexCount;
+		uint32_t m_indexCount = 0;
 	};
 }

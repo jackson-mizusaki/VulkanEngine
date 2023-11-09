@@ -23,7 +23,7 @@ namespace Ld {
 		// Buffer Data types need to be passed into structs first before accessors can work with them
 		struct GlTFBuffer {
 			std::string uri;
-			uint32_t byteLength;
+			uint32_t byteLength = 0;
 			std::string name;
 			std::vector<std::uint8_t> data;
 			//json extensions
@@ -34,10 +34,10 @@ namespace Ld {
 				Array_Buffer,
 				Element_Array_Buffer
 			};
-			uint32_t bufferIndex;
+			uint32_t bufferIndex = 0;
 			uint32_t byteOffset = 0;
-			VkDeviceSize byteLength;
-			uint32_t byteStride;
+			VkDeviceSize byteLength = 0;
+			uint32_t byteStride = 0;
 			BufferViewTarget target;
 			std::string name;
 			//json extensions
@@ -65,13 +65,13 @@ namespace Ld {
 			Type accessorType;
 			std::vector<float> maxes;
 			std::vector<float> mins;
-			uint32_t bufferViewIndex;
-			uint32_t byteOffset;
-			uint32_t count;
+			uint32_t bufferViewIndex = 0;
+			uint32_t byteOffset = 0;
+			uint32_t count = 0;
 		};
 		struct GlTFImage {
 			std::string uri;
-			GlTFBufferView* bufferView;
+			uint32_t bufferViewIndex;
 			std::string mimeType;
 			std::string name;
 			//json extensions
@@ -102,16 +102,17 @@ namespace Ld {
 		void loadAnimation(Animation& animation, json animData);
 		void loadScene(Scene& scene, json sceneData);
 	private: // data
+		std::string m_filepath;
 		Device& m_device;
 		std::map<uint32_t, std::vector<uint32_t>> nodeChildren;
-		std::vector<SceneNode*> sceneNodes;
-		std::vector<Camera*> cameras;
-		std::vector<Skin*> skins;
-		std::vector<Mesh*> meshes;
-		std::vector<GlTFAccessor*> accessors;
-		std::vector<GlTFImage*> images;
+		std::vector<SceneNode> sceneNodes;
+		std::vector<Camera> cameras;
+		std::vector<Skin> skins;
+		std::vector<Mesh> meshes;
+		std::vector<GlTFAccessor> accessors;
+		std::vector<GlTFImage> images;
 		std::vector<Texture::Sampler*> samplers;
 		std::vector<GlTFBuffer> buffers;
-		std::vector<GlTFBufferView*> bufferViews;
+		std::vector<GlTFBufferView> bufferViews;
 	};
 }

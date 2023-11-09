@@ -39,4 +39,8 @@ namespace Ld {
 			return false;
 		}
 	}
+	void SceneNode::addChild(SceneNode* child)
+	{
+		children.push_back(child);
+	}
 }

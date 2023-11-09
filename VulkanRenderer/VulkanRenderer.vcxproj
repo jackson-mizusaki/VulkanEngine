@@ -193,6 +193,8 @@
     <ClCompile Include="src\node.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_node.cpp" />
+    <ClCompile Include="systems\entity.cpp" />
+    <ClCompile Include="systems\EntityManager.cpp" />
     <ClCompile Include="Systems\simple_render_system.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -222,6 +224,10 @@
     <ClInclude Include="src\mesh.hpp" />
     <ClInclude Include="src\scene.hpp" />
     <ClInclude Include="src\skin.hpp" />
+    <ClInclude Include="systems\component.hpp" />
+    <ClInclude Include="systems\entity.hpp" />
+    <ClInclude Include="systems\EntityManager.hpp" />
+    <ClInclude Include="systems\render_component.hpp" />
     <ClInclude Include="Systems\simple_render_system.hpp" />
   </ItemGroup>
   <ItemGroup>

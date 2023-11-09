@@ -36,12 +36,14 @@ namespace Ld {
 	public: // constructors
 		Node();
 		virtual ~Node() = default;
+		virtual void  addChild(Node* child);
 	protected:// functiosn
 	public: // data
 		TransformComponent transform{};
-		std::vector<Node*> children;
 		std::string name;
 		json extensions;
 		json extras;
+	protected:
+		std::vector<Node*> children{};
 	};
 }

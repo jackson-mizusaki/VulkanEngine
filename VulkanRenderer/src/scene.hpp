@@ -16,7 +16,7 @@ using json = nlohmann::json;
 
 
 namespace Ld {
-	class Scene : public Node {
+	class Scene {
 	public:	// types
 
 
@@ -33,9 +33,12 @@ namespace Ld {
 	public: // functions
 		// void loadScene(const std::string& filepath);
 		void render(VkCommandBuffer);
+		void addNode(SceneNode* node);
 	public: // data
-		std::vector<SceneNode*> nodes;
 		std::string name;
+	private:
+
+		std::vector<SceneNode*> nodes{};
 		//json extensions;
 		//json extras;
 	};

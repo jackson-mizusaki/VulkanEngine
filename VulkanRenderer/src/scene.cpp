@@ -19,7 +19,8 @@ namespace Ld {
 	bool Scene::findCameraNode(SceneNode& cameraNode)
 	{
 		for (auto& node : nodes) {
-			return node->findCamera(cameraNode);
+			SceneNode* childSceneNode = dynamic_cast<SceneNode*>(node);
+			return childSceneNode->findCamera(cameraNode);
 		 }
 		return false;
 	}
@@ -27,8 +28,14 @@ namespace Ld {
 	void Scene::render(VkCommandBuffer commandBuffer)
 	{
 		for (auto& node : nodes) {
-			node->render(commandBuffer);
+			SceneNode* childSceneNode = dynamic_cast<SceneNode*>(node);
+			childSceneNode->render(commandBuffer);
 		}
+	}
+
+	void Scene::addNode(SceneNode* node)
+	{
+		nodes.push_back(node);
 	}
 
 }

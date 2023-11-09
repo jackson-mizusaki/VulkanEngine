@@ -32,7 +32,7 @@ namespace Ld {
 		Device m_device{ m_window };
 		Renderer m_renderer{ m_window, m_device };
 
-		int m_defaultScene = -1;
+		int m_defaultScene = 0;
 		std::unique_ptr<DescriptorPool> m_globalPool{};
 		std::vector<Scene> scenes;
 		//GameObject::Map m_gameObjects;

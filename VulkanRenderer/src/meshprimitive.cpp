@@ -50,23 +50,22 @@ namespace Ld {
 		return false;
 	}
 
-	const uint8_t* MeshPrimitive::Builder::getData(int accessorId) const
+	const uint8_t* MeshPrimitive::Builder::getData(Attribute attribute) const
 	{
-		return (accessorData.count(accessorId) > 0) ? accessorData.at(accessorId).data() : nullptr;
+		return (accessorData.count(attribute) > 0) ? accessorData.at(attribute) : nullptr;
 	}
 
 
-	MeshPrimitive::MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder) : m_device{ device }
+	MeshPrimitive::MeshPrimitive(Device& device, const MeshPrimitive::Builder& builder) :
+		m_device{ device }, m_vertexCount{ builder.vertexCount }, m_indexCount{ builder.indexCount }
 	{
-		VkBufferCreateInfo bufferCreateInfo{};
-
-		const float* positionBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kPosition));
-		const float* normalsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kNormal));
-		const float* tangentsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kTangent));
-		const float* texCoordsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kTexCoord));
-		const float* colorBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kColor));
-		const unsigned short* jointsBuffer = reinterpret_cast<const unsigned short*>(builder.getData(Builder::kJoints));
-		const float* weightsBuffer = reinterpret_cast<const float*>(builder.getData(Builder::kWeights));
+		const float* positionBuffer = reinterpret_cast<const float*>(builder.getData(Attribute::Position));
+		const float* normalsBuffer = reinterpret_cast<const float*>(builder.getData(Attribute::Normal));
+		const float* tangentsBuffer = reinterpret_cast<const float*>(builder.getData(Attribute::Tangent));
+		const float* texCoordsBuffer = reinterpret_cast<const float*>(builder.getData(Attribute::TexCoord));
+		const float* colorBuffer = reinterpret_cast<const float*>(builder.getData(Attribute::Color));
+		const unsigned short* jointsBuffer = reinterpret_cast<const unsigned short*>(builder.getData(Attribute::Joints));
+		const float* weightsBuffer = reinterpret_cast<const float*>(builder.getData(Attribute::Weights));
 
 		std::vector<Vertex> vertices{};
 		std::vector<uint32_t> indices{};
@@ -79,29 +78,29 @@ namespace Ld {
 			{
 				Vertex vert{};
 				if (positionBuffer != nullptr)
-					vert.position = glm::vec3(positionBuffer[i * 3]);
+					vert.position = glm::vec3(positionBuffer[i * 3], positionBuffer[i * 3 + 1], positionBuffer[i * 3 + 2]);
 				if (normalsBuffer != nullptr)
-					vert.normal = glm::vec3(normalsBuffer[i * 3]);
+					vert.normal = glm::vec3(normalsBuffer[i * 3], normalsBuffer[i * 3 + 1], normalsBuffer[i * 3 + 2]);
 				if (tangentsBuffer != nullptr)
-					vert.tangent = glm::vec4(tangentsBuffer[i * 4]);
+					vert.tangent = glm::vec4(tangentsBuffer[i * 4], tangentsBuffer[i * 4 + 1], tangentsBuffer[i * 4 + 2], tangentsBuffer[i * 4 +3]);
 				if (texCoordsBuffer != nullptr)
-					vert.texcoord = glm::vec2(texCoordsBuffer[i * 2]);
+					vert.texcoord = glm::vec2(texCoordsBuffer[i * 2], texCoordsBuffer[i * 2 +1]);
 				if (colorBuffer != nullptr)
 				{
 					if (builder.colorSize == 3)
 					{
 
-						vert.color = glm::vec4(glm::vec3(colorBuffer[i * 3]), 1.f);
+						vert.color = glm::vec4(glm::vec3(colorBuffer[i * 3], colorBuffer[i * 3 + 1], colorBuffer[i * 3 + 2]), 1.f);
 					}
 					else
 					{
-						vert.color = glm::vec4(colorBuffer[i * 4]);
+						vert.color = glm::vec4(colorBuffer[i * 4], colorBuffer[i * 4 + 1], colorBuffer[i * 4 + 2], colorBuffer[i * 4 + 3]);
 					}
 				}
 				if (jointsBuffer != nullptr)
-					vert.joints = glm::vec4(jointsBuffer[i * 4]);
+					vert.joints = glm::vec4(jointsBuffer[i * 4], jointsBuffer[i * 4 + 1], jointsBuffer[i * 4 + 2], jointsBuffer[i * 4 + 3]);
 				if (weightsBuffer != nullptr)
-					vert.weights = glm::vec4(weightsBuffer[i * 4]);
+					vert.weights = glm::vec4(weightsBuffer[i * 4], weightsBuffer[i * 4 + 1], weightsBuffer[i * 4 + 2], weightsBuffer[i * 4 + 3]);
 
 				vertices.push_back(vert);
 			}
@@ -111,8 +110,8 @@ namespace Ld {
 			switch (builder.indexType) {
 			case Builder::IndexType::unsigned_Int:
 			{
-				const uint32_t* indicesBuffer = reinterpret_cast<const uint32_t*>(builder.getData(Builder::kIndices));
-				for (size_t i = 0; i < m_indexCount; i++) 
+				const uint32_t* indicesBuffer = reinterpret_cast<const uint32_t*>(builder.getData(Attribute::Indices));
+				for (size_t i = 0; i < m_indexCount; i++)
 				{
 					indices.push_back(indicesBuffer[i]);
 				}
@@ -120,7 +119,7 @@ namespace Ld {
 			break;
 			case Builder::IndexType::unsigned_Short:
 			{
-				const uint16_t* indicesBuffer = reinterpret_cast<const uint16_t*>(builder.getData(Builder::kIndices));
+				const uint16_t* indicesBuffer = reinterpret_cast<const uint16_t*>(builder.getData(Attribute::Indices));
 				for (size_t i = 0; i < m_indexCount; i++)
 				{
 					indices.push_back(indicesBuffer[i]);
@@ -129,7 +128,7 @@ namespace Ld {
 			}
 			case Builder::IndexType::unsigned_Byte:
 			{
-				const uint8_t* indicesBuffer = reinterpret_cast<const uint8_t*>(builder.getData(Builder::kIndices));
+				const uint8_t* indicesBuffer = reinterpret_cast<const uint8_t*>(builder.getData(Attribute::Indices));
 				for (size_t i = 0; i < m_indexCount; i++)
 				{
 					indices.push_back(indicesBuffer[i]);
@@ -141,13 +140,13 @@ namespace Ld {
 			}
 			m_indexCount = indices.size();
 		}
+		createVertexBuffers(vertices);
+		createIndexBuffers(indices);
 	}
 
 	MeshPrimitive::~MeshPrimitive()
 	{
 	}
-
-
 
 	void MeshPrimitive::bind(VkCommandBuffer commandBuffer)
 	{
@@ -169,6 +168,11 @@ namespace Ld {
 		else {
 			vkCmdDraw(commandBuffer, m_vertexCount, 1, 0, 0);
 		}
+	}
+
+	std::unique_ptr<MeshPrimitive> MeshPrimitive::createMeshPrimitiveFromBuilder(Device& device, const MeshPrimitive::Builder& builder)
+	{
+		return std::make_unique<MeshPrimitive>(device, builder);
 	}
 
 	void MeshPrimitive::createVertexBuffers(const std::vector<Vertex>& vertices)
